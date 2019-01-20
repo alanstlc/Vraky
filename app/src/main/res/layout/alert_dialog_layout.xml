@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:stretchColumns="1">
+
+    <TextView
+        android:id="@+id/title_text"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/title_text"
+        android:gravity="center"
+        android:textSize="20sp"
+        android:textStyle="bold"/>
+
+    <TableRow>
+
+        <TextView
+            android:id="@+id/brands_text"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/brands_text"
+            android:gravity="start" />
+
+        <Spinner
+            android:id="@+id/brands_spinner"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/brands"
+            android:textAlignment="center" />
+
+    </TableRow>
+
+    <TableRow>
+
+        <TextView
+            android:id="@+id/colours_text"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/colours_text"
+            android:gravity="start" />
+
+
+        <Spinner
+            android:id="@+id/colours_spinner"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/colours"
+            android:textAlignment="center" />
+    </TableRow>
+
+    <TableRow>
+
+        <TextView
+            android:id="@+id/condition_text"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/condition_text"
+            android:gravity="start" />
+
+
+        <Spinner
+            android:id="@+id/condition_spinner"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/condition"
+            android:textAlignment="center" />
+    </TableRow>
+
+    <TableRow>
+
+        <TextView
+            android:id="@+id/length_text"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/length_text"
+            android:gravity="start" />
+
+
+        <Spinner
+            android:id="@+id/length_spinner"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/length"
+            android:textAlignment="center" />
+    </TableRow>
+</TableLayout>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+        <string name="title_text">
+        <item>Zadat nový vrak</item>
+    </string>
+    <string name="brands_text">
+        <item>Značka vozidla</item>
+    </string>
+    <string name="colours_text">
+        <item>Barva vozidla</item>
+    </string>
+    <string name="length_text">
+        <item>Přibližná délka stání</item>
+    </string>
+    <string name="condition_text">
+        <item>Stav vozidla</item>
+    </string>
+    <string-array name="brands">
+        <item>Alfa Romeo</item>
+        <item>Audi</item>
+        <item>BMW</item>
+        <item>Citroen</item>
+        <item>Dacia</item>
+        <item>Daewoo</item>
+        <item>Fiat</item>
+        <item>Ford</item>
+        <item>Honda</item>
+        <item>Hyundai</item>
+        <item>Kia</item>
+        <item>Lada</item>
+        <item>Mazda</item>
+        <item>Mercedes-Benz</item>
+        <item>Mitsubishi</item>
+        <item>Nissan</item>
+        <item>Opel</item>
+        <item>Peugeot</item>
+        <item>Renault</item>
+        <item>Seat</item>
+        <item>Suzuki</item>
+        <item>Skoda</item>
+        <item>Toyota</item>
+        <item>Volkswagen</item>
+        <item>Volvo</item>
+        <item>Jiné</item>
+    </string-array>
+    <string-array name="colours">
+        <item>Béžové</item>
+        <item>Bílé</item>
+        <item>Černé</item>
+        <item>Červené</item>
+        <item>Fialové</item>
+        <item>Hnědé</item>
+        <item>Modré</item>
+        <item>Oranžové</item>
+        <item>Růžové</item>
+        <item>Stříbrné</item>
+        <item>Šedé</item>
+        <item>Zelené</item>
+        <item>Žluté</item>
+        <item>Jiné</item>
+    </string-array>
+    <string-array name="length">
+        <item>Do půl roku</item>
+        <item>Půl roku až rok</item>
+        <item>Rok až dva roky</item>
+        <item>Déle než dva roky</item>
+    </string-array>
+    <string-array name="condition">
+        <item>Nepojízdné</item>
+        <item>Pojízdné</item>
+    </string-array>
+</resources>
