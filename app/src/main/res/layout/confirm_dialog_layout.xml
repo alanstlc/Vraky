@@ -8,8 +8,8 @@
         android:id="@+id/title_text"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/title_text"
         android:gravity="center"
+        android:hint="@string/title_text"
         android:textSize="20sp"
         android:textStyle="bold" />
 
@@ -19,14 +19,14 @@
             android:id="@+id/brands_text"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/brands_text"
-            android:gravity="start" />
+            android:gravity="start"
+            android:hint="@string/brands_text" />
 
-        <Spinner
-            android:id="@+id/brands_spinner"
+        <TextView
+            android:id="@+id/brand_selected"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:entries="@array/brands"
+            android:hint="@string/brands_text"
             android:textAlignment="center" />
 
     </TableRow>
@@ -37,15 +37,15 @@
             android:id="@+id/colours_text"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/colours_text"
-            android:gravity="start" />
+            android:gravity="start"
+            android:hint="@string/colours_text" />
 
 
-        <Spinner
-            android:id="@+id/colours_spinner"
+        <TextView
+            android:id="@+id/colour_selected"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:entries="@array/colours"
+            android:hint="@string/colours_text"
             android:textAlignment="center" />
     </TableRow>
 
@@ -55,15 +55,15 @@
             android:id="@+id/condition_text"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/condition_text"
-            android:gravity="start" />
+            android:gravity="start"
+            android:hint="@string/condition_text" />
 
 
-        <Spinner
-            android:id="@+id/condition_spinner"
+        <TextView
+            android:id="@+id/condition_selected"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:entries="@array/condition"
+            android:hint="@string/condition_text"
             android:textAlignment="center" />
     </TableRow>
 
@@ -73,15 +73,15 @@
             android:id="@+id/length_text"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/length_text"
-            android:gravity="start" />
+            android:gravity="start"
+            android:hint="@string/length_text" />
 
 
-        <Spinner
-            android:id="@+id/length_spinner"
+        <TextView
+            android:id="@+id/length_selected"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:entries="@array/length"
+            android:hint="@string/length_text"
             android:textAlignment="center" />
     </TableRow>
 </TableLayout>

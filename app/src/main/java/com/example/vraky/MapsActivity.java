@@ -3,6 +3,7 @@ package com.example.vraky;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.Settings;
@@ -10,6 +11,7 @@ import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -36,6 +38,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     final Context context = this;
+    private static double latitude_constant = 0.0005;
+    private static double longitude_constant = 0.0035;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,71 +62,97 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // Move the camera to Vrsovice
         LatLng vrsovice = new LatLng(50.069175, 14.453255);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(vrsovice, 18));
 
-        System.out.println("Loading points on the map");
-        loadPoints(mMap);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(vrsovice, 18));
 
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(final LatLng latLng) {
 
-                System.out.println("Map long clicked");
-
-                final Marker markerName = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory
-                        .defaultMarker(BitmapDescriptorFactory.HUE_CYAN)));
-
                 AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
-                alertDialogBuilder.setTitle("");
                 AlertDialog alertDialog = alertDialogBuilder.create();
                 LayoutInflater inflater = alertDialog.getLayoutInflater();
-                final View tableView = inflater.inflate(R.layout.alert_dialog_layout, null);
 
-                alertDialogBuilder.setView(tableView);
-                alertDialogBuilder.setPositiveButton("Potvrdit", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
+                // Check whether any marker was clicked
+                JSONObject clickedMarker = proximityCheck(mMap, latLng, 10);
+                if (clickedMarker != null) {
 
-                        Spinner brandsSpinner = tableView.findViewById(R.id.brands_spinner);
-                        Spinner coloursSpinner = tableView.findViewById(R.id.colours_spinner);
-                        Spinner conditionSpinner = tableView.findViewById(R.id.condition_spinner);
-                        Spinner lengthSpinner = tableView.findViewById(R.id.length_spinner);
+                    final View tableView = inflater.inflate(R.layout.confirm_dialog_layout, null);
+                    alertDialogBuilder.setView(tableView);
 
-                        String brand_selected = brandsSpinner.getSelectedItem().toString();
-                        String colour_selected = coloursSpinner.getSelectedItem().toString();
-                        String condition_selected = conditionSpinner.getSelectedItem().toString();
-                        String length_selected = Integer.toString(lengthSpinner.getSelectedItemPosition());
-
-                        if (condition_selected.equals("Nepojízdné")) {
-                            condition_selected = "0";
-                        } else {
-                            condition_selected = "1";
-                        }
-
-                        markerName.setTitle(colour_selected.concat(" auto značky ").concat(brand_selected));
-
-                        String urlParameters = getInsertParameters(latLng, getUID(), brand_selected, colour_selected, length_selected, condition_selected);
-                        try {
-                            URL url = new URL("http://www.stolc.net/insert.php");
-                            System.out.println(getResponseFromHttpUrl(url, urlParameters));
-                        } catch (Exception e) {
-                            System.out.println(e.fillInStackTrace());
-                        }
+                    try {
+                        TextView brandTW = tableView.findViewById(R.id.brand_selected);
+                        brandTW.setText(clickedMarker.getString("brand"));
+                        TextView colourTW = tableView.findViewById(R.id.colour_selected);
+                        colourTW.setText(clickedMarker.getString("colour"));
+                    } catch (Exception e) {
+                        System.out.println(e.fillInStackTrace());
                     }
-                });
 
-                alertDialogBuilder.setNegativeButton("Zrušit", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        markerName.remove();
-                    }
-                });
+                    alertDialogBuilder.setPositiveButton("Potvrdit", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                        }
+                    });
+                    alertDialogBuilder.setNeutralButton("Vrak tu není", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                        }
+                    });
+                    alertDialogBuilder.setNegativeButton("Zrušit", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                        }
+                    });
+                } else {
 
+                    final Marker markerName = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory
+                            .defaultMarker(BitmapDescriptorFactory.HUE_CYAN)));
+
+                    final View tableView = inflater.inflate(R.layout.alert_dialog_layout, null);
+                    alertDialogBuilder.setView(tableView);
+                    alertDialogBuilder.setPositiveButton("Potvrdit", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+
+                            Spinner brandsSpinner = tableView.findViewById(R.id.brands_spinner);
+                            Spinner coloursSpinner = tableView.findViewById(R.id.colours_spinner);
+                            Spinner conditionSpinner = tableView.findViewById(R.id.condition_spinner);
+                            Spinner lengthSpinner = tableView.findViewById(R.id.length_spinner);
+
+                            String brand_selected = brandsSpinner.getSelectedItem().toString();
+                            String colour_selected = coloursSpinner.getSelectedItem().toString();
+                            String condition_selected = conditionSpinner.getSelectedItem().toString();
+                            String length_selected = Integer.toString(lengthSpinner.getSelectedItemPosition());
+
+                            if (condition_selected.equals("Nepojízdné")) {
+                                condition_selected = "0";
+                            } else {
+                                condition_selected = "1";
+                            }
+
+                            markerName.setTitle(colour_selected.concat(" auto značky ").concat(brand_selected));
+                            String urlParameters = getInsertParameters(latLng, getUID(), brand_selected, colour_selected, length_selected, condition_selected);
+                            try {
+                                URL url = new URL("http://www.stolc.net/insert.php");
+                                getResponseFromHttpUrl(url, urlParameters);
+                            } catch (Exception e) {
+                                System.out.println(e.fillInStackTrace());
+                            }
+                        }
+                    });
+
+                    alertDialogBuilder.setNegativeButton("Zrušit", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            markerName.remove();
+                        }
+                    });
+                }
                 alertDialog = alertDialogBuilder.create();
+                alertDialog.setCanceledOnTouchOutside(false);
                 alertDialog.show();
             }
         });
     }
 
-    public static void loadPoints(GoogleMap mMap) {
+    // get markers from db
+    public static String[] getMarkers(GoogleMap mMap) {
         String urlParameters = getBoundariesParameters(mMap);
         String json_data = "";
 
@@ -133,32 +163,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } catch (Exception e) {
             System.out.println(e.fillInStackTrace());
         }
+        return json_data.split("\\|");
+    }
 
-        System.out.println(json_data);
-
-        String[] json_data_array = json_data.split("\\|");
-
+    public static void addMarkers(GoogleMap mMap, String[] json_data_array) {
         for (int i = 0; i < json_data_array.length; i++) {
-
-            System.out.println(json_data_array[i]);
-
             try {
                 JSONObject jsonObj = new JSONObject(json_data_array[i]);
-                System.out.println(jsonObj.getString("user_id"));
-                System.out.println(jsonObj.getString("colour"));
-
                 LatLng latLng = new LatLng(jsonObj.getDouble("latitude"), jsonObj.getDouble("longitude"));
 
-                Marker markerName = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory
-                        .defaultMarker(BitmapDescriptorFactory.HUE_CYAN)));
-                markerName.setTitle(jsonObj.getString("colour").concat(" auto značky ").concat(jsonObj.getString("brand")));
+                MarkerOptions markerOptions = new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory
+                        .defaultMarker(BitmapDescriptorFactory.HUE_CYAN));
 
+                Marker markerName = mMap.addMarker(markerOptions);
+                markerName.setTitle(jsonObj.getString("colour").concat(" auto značky ").concat(jsonObj.getString("brand")));
             } catch (JSONException e) {
                 System.out.println(e.fillInStackTrace());
             }
         }
     }
 
+    // communication with DB
     public static String getResponseFromHttpUrl(URL url, String urlParameters) throws IOException {
 
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -194,7 +219,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onCameraIdle() {
-        loadPoints(mMap);
+        addMarkers(mMap, getMarkers(mMap));
         System.out.println("Moving!");
     }
 
@@ -203,17 +228,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Settings.Secure.ANDROID_ID);
     }
 
+    // create String with urlParameters
     public static String getBoundariesParameters(GoogleMap mMap) {
         LatLng position = mMap.getCameraPosition().target;
         double zoom = mMap.getCameraPosition().zoom;
-        double northBound = position.latitude + 0.0005 * position.latitude / zoom;
-        double southBound = position.latitude - 0.0005 * position.latitude / zoom;
-        double westBound = position.longitude - 0.0035 * position.longitude / zoom;
-        double eastBound = position.longitude + 0.0035 * position.longitude / zoom;
-        System.out.println(northBound);
-        System.out.println(southBound);
-        System.out.println(westBound);
-        System.out.println(eastBound);
+        double northBound = position.latitude + latitude_constant * position.latitude / zoom;
+        double southBound = position.latitude - latitude_constant * position.latitude / zoom;
+        double westBound = position.longitude - longitude_constant * position.longitude / zoom;
+        double eastBound = position.longitude + longitude_constant * position.longitude / zoom;
 
         StringBuilder sb = new StringBuilder();
         sb.append("northBound=").append(northBound).append("&southBound=").append(southBound);
@@ -221,13 +243,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return sb.toString();
     }
 
-    public static String getInsertParameters(LatLng latLng, String UID, String brand_selected, String colour_selected, String length_selected, String condition_selected) {
-        // create String with urlParameters
+    // create String with urlParameters
+    public static String getInsertParameters(LatLng latLng, String UID, String
+            brand_selected, String colour_selected, String length_selected, String condition_selected) {
         StringBuilder sb = new StringBuilder();
         sb.append("user_id=").append(UID);
         sb.append("&latitude=").append(latLng.latitude).append("&longitude=").append(latLng.longitude);
         sb.append("&brand=").append(brand_selected).append("&colour=").append(colour_selected);
         sb.append("&status=").append(condition_selected).append("&length=").append(length_selected);
         return sb.toString();
+    }
+
+    // check for markers within radius
+    public static JSONObject proximityCheck(GoogleMap mMap, LatLng latLng, int radius) {
+        String[] json_data_array = getMarkers(mMap);
+        for (int i = 0; i < json_data_array.length; i++) {
+            try {
+                JSONObject jsonObj = new JSONObject(json_data_array[i]);
+
+                float[] results = new float[1];
+                Location.distanceBetween(jsonObj.getDouble("latitude"), jsonObj.getDouble("longitude"), latLng.latitude, latLng.longitude, results);
+                if (results[0] < radius) {
+                    return jsonObj;
+                }
+            } catch (Exception e) {
+                e.fillInStackTrace();
+            }
+        }
+        return null;
     }
 }
