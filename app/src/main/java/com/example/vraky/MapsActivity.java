@@ -74,33 +74,56 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 LayoutInflater inflater = alertDialog.getLayoutInflater();
 
                 // Check whether any marker was clicked
-                JSONObject clickedMarker = proximityCheck(mMap, latLng, 10);
+                JSONObject clickedMarker = proximityCheck(mMap, latLng, 18);
                 if (clickedMarker != null) {
 
                     final View tableView = inflater.inflate(R.layout.confirm_dialog_layout, null);
                     alertDialogBuilder.setView(tableView);
 
                     try {
-                        TextView brandTW = tableView.findViewById(R.id.brand_selected);
-                        brandTW.setText(clickedMarker.getString("brand"));
-                        TextView colourTW = tableView.findViewById(R.id.colour_selected);
-                        colourTW.setText(clickedMarker.getString("colour"));
+                        final LatLng markerLatLng = new LatLng(clickedMarker.getDouble("latitude"), clickedMarker.getDouble("longitude"));
+
+                        try {
+                            TextView brandTW = tableView.findViewById(R.id.brand_selected);
+                            brandTW.setText(clickedMarker.getString("brand"));
+                            TextView colourTW = tableView.findViewById(R.id.colour_selected);
+                            colourTW.setText(clickedMarker.getString("colour"));
+                        } catch (Exception e) {
+                            System.out.println(e.fillInStackTrace());
+                        }
+
+                        alertDialogBuilder.setPositiveButton("Potvrdit vrak", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                // insert user to users table
+                                String urlParameters = getInsertUserParameters(markerLatLng, getUID(), 1);
+                                try {
+                                    URL url = new URL(context.getResources().getString(R.string.insert_user));
+                                    getResponseFromHttpUrl(url, urlParameters);
+                                } catch (Exception e) {
+                                    System.out.println(e.fillInStackTrace());
+                                }
+                            }
+                        });
+                        alertDialogBuilder.setNeutralButton("Vrak tu není", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                // insert user to users table
+                                String urlParameters = getInsertUserParameters(markerLatLng, getUID(), 0);
+                                try {
+                                    URL url = new URL(context.getResources().getString(R.string.insert_user));
+                                    getResponseFromHttpUrl(url, urlParameters);
+                                } catch (Exception e) {
+                                    System.out.println(e.fillInStackTrace());
+                                }
+                            }
+                        });
+                        alertDialogBuilder.setNegativeButton("Zrušit", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                            }
+                        });
+
                     } catch (Exception e) {
                         System.out.println(e.fillInStackTrace());
                     }
-
-                    alertDialogBuilder.setPositiveButton("Potvrdit", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                        }
-                    });
-                    alertDialogBuilder.setNeutralButton("Vrak tu není", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                        }
-                    });
-                    alertDialogBuilder.setNegativeButton("Zrušit", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                        }
-                    });
                 } else {
 
                     final Marker markerName = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory
@@ -114,12 +137,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             Spinner brandsSpinner = tableView.findViewById(R.id.brands_spinner);
                             Spinner coloursSpinner = tableView.findViewById(R.id.colours_spinner);
                             Spinner conditionSpinner = tableView.findViewById(R.id.condition_spinner);
-                            Spinner lengthSpinner = tableView.findViewById(R.id.length_spinner);
 
                             String brand_selected = brandsSpinner.getSelectedItem().toString();
                             String colour_selected = coloursSpinner.getSelectedItem().toString();
                             String condition_selected = conditionSpinner.getSelectedItem().toString();
-                            String length_selected = Integer.toString(lengthSpinner.getSelectedItemPosition());
 
                             if (condition_selected.equals("Nepojízdné")) {
                                 condition_selected = "0";
@@ -128,9 +149,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             }
 
                             markerName.setTitle(colour_selected.concat(" auto značky ").concat(brand_selected));
-                            String urlParameters = getInsertParameters(latLng, getUID(), brand_selected, colour_selected, length_selected, condition_selected);
+                            String urlParameters = getInsertPointParameters(latLng, brand_selected, colour_selected);
+                            // insert point to points table
                             try {
-                                URL url = new URL("http://www.stolc.net/insert.php");
+                                URL url = new URL(context.getResources().getString(R.string.insert_point));
+                                getResponseFromHttpUrl(url, urlParameters);
+                            } catch (Exception e) {
+                                System.out.println(e.fillInStackTrace());
+                            }
+
+                            // insert user to users table
+
+                            urlParameters = getInsertUserParameters(latLng, getUID(), 1);
+                            try {
+                                URL url = new URL(context.getResources().getString(R.string.insert_user));
                                 getResponseFromHttpUrl(url, urlParameters);
                             } catch (Exception e) {
                                 System.out.println(e.fillInStackTrace());
@@ -152,12 +184,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     // get markers from db
-    public static String[] getMarkers(GoogleMap mMap) {
+    public String[] getMarkers(GoogleMap mMap) {
         String urlParameters = getBoundariesParameters(mMap);
         String json_data = "";
 
         try {
-            URL url = new URL("http://www.stolc.net/select.php");
+            URL url = new URL(context.getResources().getString(R.string.select_points));
             json_data = getResponseFromHttpUrl(url, urlParameters);
             json_data = json_data.substring(0, json_data.length() - 1);
         } catch (Exception e) {
@@ -184,9 +216,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     // communication with DB
-    public static String getResponseFromHttpUrl(URL url, String urlParameters) throws IOException {
+    public String getResponseFromHttpUrl(URL url, String urlParameters) throws IOException {
 
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+        urlParameters = getConnectionParameters().concat("&").concat(urlParameters);
 
         byte[] postData = urlParameters.getBytes(StandardCharsets.UTF_8);
         int postDataLength = postData.length;
@@ -243,19 +277,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return sb.toString();
     }
 
-    // create String with urlParameters
-    public static String getInsertParameters(LatLng latLng, String UID, String
-            brand_selected, String colour_selected, String length_selected, String condition_selected) {
+    // create String with connection urlParameters
+    public String getConnectionParameters() {
         StringBuilder sb = new StringBuilder();
-        sb.append("user_id=").append(UID);
+        sb.append("servername=").append(context.getResources().getString(R.string.servername));
+        sb.append("&dbname=").append(context.getResources().getString(R.string.dbname));
+        sb.append("&username=").append(context.getResources().getString(R.string.username));
+        sb.append("&password=").append(context.getResources().getString(R.string.password));
+        return sb.toString();
+    }
+
+    // create String with urlParameters for points table
+    public static String getInsertPointParameters(LatLng latLng, String brand_selected, String colour_selected) {
+        StringBuilder sb = new StringBuilder();
         sb.append("&latitude=").append(latLng.latitude).append("&longitude=").append(latLng.longitude);
         sb.append("&brand=").append(brand_selected).append("&colour=").append(colour_selected);
-        sb.append("&status=").append(condition_selected).append("&length=").append(length_selected);
+        sb.append("&status=1");
+        return sb.toString();
+    }
+
+    // create String with urlParameters for users table
+    public static String getInsertUserParameters(LatLng latLng, String UID, int status) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("user_id=").append(UID).append("&status=").append(status);
+        sb.append("&latitude=").append(latLng.latitude).append("&longitude=").append(latLng.longitude);
         return sb.toString();
     }
 
     // check for markers within radius
-    public static JSONObject proximityCheck(GoogleMap mMap, LatLng latLng, int radius) {
+    public JSONObject proximityCheck(GoogleMap mMap, LatLng latLng, int radius) {
         String[] json_data_array = getMarkers(mMap);
         for (int i = 0; i < json_data_array.length; i++) {
             try {
