@@ -48,40 +48,4 @@
             android:entries="@array/colours"
             android:textAlignment="center" />
     </TableRow>
-
-    <TableRow>
-
-        <TextView
-            android:id="@+id/condition_text"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/condition_text"
-            android:gravity="start" />
-
-
-        <Spinner
-            android:id="@+id/condition_spinner"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:entries="@array/condition"
-            android:textAlignment="center" />
-    </TableRow>
-
-    <TableRow>
-
-        <TextView
-            android:id="@+id/length_text"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/length_text"
-            android:gravity="start" />
-
-
-        <Spinner
-            android:id="@+id/length_spinner"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:entries="@array/length"
-            android:textAlignment="center" />
-    </TableRow>
 </TableLayout>

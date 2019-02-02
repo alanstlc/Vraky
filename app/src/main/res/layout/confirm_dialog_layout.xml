@@ -49,39 +49,14 @@
             android:textAlignment="center" />
     </TableRow>
 
-    <TableRow>
 
-        <TextView
-            android:id="@+id/condition_text"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:gravity="start"
-            android:hint="@string/condition_text" />
-
-
-        <TextView
-            android:id="@+id/condition_selected"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/condition_text"
-            android:textAlignment="center" />
-    </TableRow>
-
-    <TableRow>
-
-        <TextView
-            android:id="@+id/length_text"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:gravity="start"
-            android:hint="@string/length_text" />
+    <TextView
+        android:id="@+id/confirmation_text"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:hint="Označil jsem, že tu vrak je či není"
+        android:visibility="invisible"/>
 
 
-        <TextView
-            android:id="@+id/length_selected"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/length_text"
-            android:textAlignment="center" />
-    </TableRow>
 </TableLayout>
