@@ -1,5 +1,6 @@
 package com.example.vraky;
 
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 
 public class GetParams {
@@ -34,5 +35,26 @@ public class GetParams {
         sb.append("user_id=").append(UID);
         sb.append("&latitude=").append(latLng.latitude).append("&longitude=").append(latLng.longitude);
         return sb.toString();
+    }
+
+    // create String with urlParameters
+    public static String getBoundariesParameters(GoogleMap mMap) {
+        LatLng position = mMap.getCameraPosition().target;
+        double zoom = mMap.getCameraPosition().zoom;
+        double northBound = position.latitude + 1 / Math.pow(2, zoom - 1) / 0.005;
+        double southBound = position.latitude - 1 / Math.pow(2, zoom - 1) / 0.005;
+        double westBound = position.longitude - 1 / Math.pow(2, zoom - 1) / 0.005;
+        double eastBound = position.longitude + 1 / Math.pow(2, zoom - 1) / 0.005;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("northBound=").append(northBound).append("&southBound=").append(southBound);
+        sb.append("&westBound=").append(westBound).append("&eastBound=").append(eastBound);
+        return sb.toString();
+    }
+
+    public static Boolean isCSSR(LatLng latLng) {
+        if (47.5 < latLng.latitude && latLng.latitude < 51 && 12 < latLng.longitude && latLng.longitude < 22.5)
+            return true;
+        else return false;
     }
 }
