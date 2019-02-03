@@ -1,4 +1,6 @@
 <resources>
-    <string name="app_name">My Application</string>
-    <string name="title_activity_maps">Epic App</string>
+    <string name="app_name">Autovraky</string>
+    <string name="title_activity_maps">Autovraky</string>
+    <string name="app_description">Aplikace Autovraky slouží k poukázání na problematiku neodtahovaných vraků v ulicích vašeho města. Jakékoliv návrhy pro zlepšení aplikace jsou vítány na emailu alan@stolc.net.</string>
+    <string name="controls_text">Pro zjištení základních informací o vraku jednou kliknětě na vrak. Pro zadání nového vraku nebo (ne)potvrzení stávajícího vraku dlouze stiskněte vrak na mapě.</string>
 </resources>

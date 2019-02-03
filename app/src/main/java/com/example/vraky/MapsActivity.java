@@ -3,13 +3,16 @@ package com.example.vraky;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.pm.ActivityInfo;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -58,6 +61,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // curl in main thread needs this
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
+
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
     }
 
     @Override
@@ -65,10 +70,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         mMap.setOnCameraIdleListener(this);
 
-        // move the camera to Vrsovice
-        LatLng vrsovice = new LatLng(50.069175, 14.453255);
+        LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        boolean network_enabled = locManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        Location location;
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(vrsovice, 18));
+        // move the camera to Vrsovice if no network_provider found
+        LatLng startLocation = new LatLng(50.069175, 14.453255);
+        if (network_enabled) {
+            location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            if (location != null) {
+                startLocation = new LatLng(location.getLatitude(), location.getLongitude());
+            }
+        }
+
+        Button infoButton = getWindow().getDecorView().findViewById(R.id.infoButton);
+        infoButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
+                AlertDialog alertDialog = alertDialogBuilder.create();
+                LayoutInflater inflater = alertDialog.getLayoutInflater();
+                final View infoView = inflater.inflate(R.layout.info_button_layout, null);
+                alertDialogBuilder.setView(infoView);
+                alertDialogBuilder.setNegativeButton("Ok", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                    }
+                });
+                alertDialog = alertDialogBuilder.create();
+                alertDialog.show();
+            }
+        });
+        // TODO: Uncomment when deployed to PROD!
+        //infoButton.performClick();
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(startLocation, 18));
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(final LatLng latLng) {
@@ -99,14 +133,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 } catch (Exception e) {
                                     System.out.println(e.fillInStackTrace());
                                 }
-
+                                // count number of raters
+                                int[] ratings = ratingsWithPoint(markerLatLng);
+                                TextView headcountTW = tableView.findViewById(R.id.headcount_text);
+                                headcountTW.setVisibility(View.VISIBLE);
+                                int positive_users = 0;
+                                int negative_users = 0;
+                                for (int i = 0; i < ratings.length; i++) {
+                                    if (ratings[i] == 1)
+                                        positive_users++;
+                                    else
+                                        negative_users++;
+                                }
+                                headcountTW.setText("Počet uživatelů, kteří nahlásili vrak: " + Integer.toString(positive_users));
+                                if (negative_users > 0) {
+                                    TextView fakeHeadcountTW = tableView.findViewById(R.id.fake_headcount_text);
+                                    fakeHeadcountTW.setVisibility(View.VISIBLE);
+                                    fakeHeadcountTW.setText("Počet uživatelů, kteří nahlásili, že tu nic není: " + Integer.toString(positive_users));
+                                }
+                                // check rating of the user
                                 final Boolean userPointRating = userRatedPoint(markerLatLng, getUID());
                                 TextView confirmationTW = tableView.findViewById(R.id.confirmation_text);
                                 confirmationTW.setVisibility(View.VISIBLE);
-                                if (userPointRating == true) {
-                                    confirmationTW.setText("Označil jsem, že tu vrak je");
-                                } else {
-                                    confirmationTW.setText("Označil jsem, že tu vrak není");
+                                if (userPointRating != null) {
+                                    if (userPointRating == true) {
+                                        confirmationTW.setText("Označil jsem, že tu vrak je");
+                                    } else {
+                                        confirmationTW.setText("Označil jsem, že tu vrak není");
+                                    }
                                 }
 
                                 if (userPointRating == null || userPointRating == false) {
@@ -137,8 +191,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 if (userPointRating == null || userPointRating == true) {
                                     alertDialogBuilder.setNeutralButton("Vrak tu není", new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int id) {
-                                            String[] pointRaters = usersWithPoint(markerLatLng);
                                             // if this is the last user of this point, delete the point and user
+                                            String[] pointRaters = usersWithPoint(markerLatLng);
                                             if (pointRaters.length == 1 && pointRaters[0].equals(getUID())) {
                                                 // delete user
                                                 String urlParameters = getDeleteUserParameters(markerLatLng, getUID());
@@ -191,7 +245,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             }
 
                         } else {
-
+                            // no marker exit on the point as of yet, create one
                             final Marker markerName = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory
                                     .defaultMarker(BitmapDescriptorFactory.HUE_CYAN)));
 
@@ -255,7 +309,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
-    // get markers from db
+    // load markers from db
     public String[] getMarkers(GoogleMap mMap) {
         String urlParameters = getBoundariesParameters(mMap);
         String json_data = "";
@@ -270,6 +324,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return json_data.split("\\|");
     }
 
+    // show markers on the map
     public static void addMarkers(GoogleMap mMap, String[] json_data_array) {
         for (int i = 0; i < json_data_array.length; i++) {
             try {
@@ -322,6 +377,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    // when camera is still, load markers
     @Override
     public void onCameraIdle() {
         addMarkers(mMap, getMarkers(mMap));
@@ -358,11 +414,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         sb.append("latitude=").append(latLng.latitude).append("&longitude=").append(latLng.longitude);
         sb.append("&user_id=").append(user_id);
         String urlParameters = sb.toString();
-        String json_data = "";
         try {
             URL url = new URL(context.getResources().getString(R.string.select_user));
-            json_data = getResponseFromHttpUrl(url, urlParameters);
-            if (json_data != "0") {
+            String json_data = getResponseFromHttpUrl(url, urlParameters);
+            if (!json_data.equals("0")) {
                 json_data = json_data.substring(0, json_data.length() - 1);
                 String[] json_data_array = json_data.split("\\|");
                 JSONObject jsonObj = new JSONObject(json_data_array[0]);
@@ -380,11 +435,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         StringBuilder sb = new StringBuilder();
         sb.append("latitude=").append(latLng.latitude).append("&longitude=").append(latLng.longitude);
         String urlParameters = sb.toString();
-        String json_data = "";
         try {
             URL url = new URL(context.getResources().getString(R.string.select_users));
-            json_data = getResponseFromHttpUrl(url, urlParameters);
-            if (json_data != "0") {
+            String json_data = getResponseFromHttpUrl(url, urlParameters);
+            if (!json_data.equals("0")) {
                 json_data = json_data.substring(0, json_data.length() - 1);
                 String[] json_data_array = json_data.split("\\|");
                 String[] users_array = new String[json_data_array.length];
@@ -404,6 +458,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return null;
     }
 
+    // return array of ratings with this point
+    public int[] ratingsWithPoint(LatLng latLng) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("latitude=").append(latLng.latitude).append("&longitude=").append(latLng.longitude);
+        String urlParameters = sb.toString();
+        try {
+            URL url = new URL(context.getResources().getString(R.string.select_users));
+            String json_data = getResponseFromHttpUrl(url, urlParameters);
+            if (!json_data.equals("0")) {
+                json_data = json_data.substring(0, json_data.length() - 1);
+                String[] json_data_array = json_data.split("\\|");
+                int[] ratings_array = new int[json_data_array.length];
+                for (int i = 0; i < json_data_array.length; i++) {
+                    try {
+                        JSONObject jsonObj = new JSONObject(json_data_array[i]);
+                        ratings_array[i] = jsonObj.getInt("status");
+                    } catch (Exception e) {
+                        e.fillInStackTrace();
+                    }
+                }
+                return ratings_array;
+            }
+        } catch (Exception e) {
+            System.out.println(e.fillInStackTrace());
+        }
+        return null;
+    }
+
     // create String with connection urlParameters
     public String getConnectionParameters() {
         StringBuilder sb = new StringBuilder();
@@ -413,4 +495,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         sb.append("&password=").append(context.getResources().getString(R.string.password));
         return sb.toString();
     }
+
+
 }
