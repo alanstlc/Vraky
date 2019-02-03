@@ -1,15 +1,22 @@
 package com.example.vraky;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.Settings;
+import android.support.annotation.DrawableRes;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -20,6 +27,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -48,10 +56,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     final Context context = this;
+    private static final String[] INITIAL_PERMS = {
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.READ_CONTACTS
+    };
+    private static final String[] LOCATION_PERMS = {
+            Manifest.permission.ACCESS_FINE_LOCATION
+    };
+    private static final int INITIAL_REQUEST = 1337;
+    private static final int LOCATION_REQUEST = INITIAL_REQUEST + 3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (!canAccessLocation()) {
+            requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
+        }
         setContentView(R.layout.activity_maps);
         // obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -70,17 +91,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         mMap.setOnCameraIdleListener(this);
 
-        LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        boolean network_enabled = locManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-        Location location;
-
         // move the camera to Vrsovice if no network_provider found
         LatLng startLocation = new LatLng(50.069175, 14.453255);
-        if (network_enabled) {
-            location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-            if (location != null) {
+
+        if (canAccessLocation()) {
+            LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            boolean network_enabled = locManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+
+            if (network_enabled) {
+                Location location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                 startLocation = new LatLng(location.getLatitude(), location.getLongitude());
             }
+        } else {
+            requestPermissions(LOCATION_PERMS, LOCATION_REQUEST);
         }
 
         Button infoButton = getWindow().getDecorView().findViewById(R.id.infoButton);
@@ -149,7 +172,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 if (negative_users > 0) {
                                     TextView fakeHeadcountTW = tableView.findViewById(R.id.fake_headcount_text);
                                     fakeHeadcountTW.setVisibility(View.VISIBLE);
-                                    fakeHeadcountTW.setText("Počet uživatelů, kteří nahlásili, že tu nic není: " + Integer.toString(positive_users));
+                                    fakeHeadcountTW.setText("Počet uživatelů, kteří nahlásili, že tu nic není: " + Integer.toString(negative_users));
                                 }
                                 // check rating of the user
                                 final Boolean userPointRating = userRatedPoint(markerLatLng, getUID());
@@ -166,7 +189,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 if (userPointRating == null || userPointRating == false) {
                                     alertDialogBuilder.setPositiveButton("Vrak tu je", new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int id) {
-                                            if (userPointRating == false) {
+                                            if (userPointRating != null) {
                                                 // delete user's negative rating
                                                 String urlParameters = getDeleteUserParameters(markerLatLng, getUID());
                                                 try {
@@ -325,14 +348,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     // show markers on the map
-    public static void addMarkers(GoogleMap mMap, String[] json_data_array) {
+    public void addMarkers(GoogleMap mMap, String[] json_data_array) {
         for (int i = 0; i < json_data_array.length; i++) {
             try {
                 JSONObject jsonObj = new JSONObject(json_data_array[i]);
                 LatLng latLng = new LatLng(jsonObj.getDouble("latitude"), jsonObj.getDouble("longitude"));
 
-                MarkerOptions markerOptions = new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory
-                        .defaultMarker(BitmapDescriptorFactory.HUE_CYAN));
+                MarkerOptions markerOptions = new MarkerOptions().position(latLng).icon(bitmapDescriptorFromVector(context, R.drawable.ic_directions_car_black_24dp));
+                        //.icon(BitmapDescriptorFactory
+                        //.defaultMarker(BitmapDescriptorFactory.HUE_CYAN));
 
                 Marker markerName = mMap.addMarker(markerOptions);
                 markerName.setTitle(jsonObj.getString("colour").concat(" auto značky ").concat(jsonObj.getString("brand")));
@@ -340,6 +364,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 System.out.println(e.fillInStackTrace());
             }
         }
+    }
+
+    private BitmapDescriptor bitmapDescriptorFromVector(Context context, @DrawableRes int vectorDrawableResourceId) {
+        Drawable background = ContextCompat.getDrawable(context, R.drawable.ic_directions_car_black_24dp);
+        background.setBounds(0, 0, background.getIntrinsicWidth(), background.getIntrinsicHeight());
+        Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorDrawableResourceId);
+        vectorDrawable.setBounds(40, 20, vectorDrawable.getIntrinsicWidth() + 40, vectorDrawable.getIntrinsicHeight() + 20);
+        Bitmap bitmap = Bitmap.createBitmap(background.getIntrinsicWidth(), background.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        background.draw(canvas);
+        vectorDrawable.draw(canvas);
+        return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
 
     // communication with DB
@@ -496,5 +532,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return sb.toString();
     }
 
+    private boolean canAccessLocation() {
+        return (hasPermission(Manifest.permission.ACCESS_FINE_LOCATION));
+    }
+
+    private boolean hasPermission(String perm) {
+        return (PackageManager.PERMISSION_GRANTED == checkSelfPermission(perm));
+    }
 
 }
