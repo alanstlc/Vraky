@@ -8,18 +8,21 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.Settings;
-import android.support.annotation.DrawableRes;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -90,6 +93,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setOnCameraIdleListener(this);
+        mMap.setMyLocationEnabled(true);
 
         // move the camera to Vrsovice if no network_provider found
         LatLng startLocation = new LatLng(50.069175, 14.453255);
@@ -153,6 +157,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     brandTW.setText(clickedMarker.getString("brand"));
                                     TextView colourTW = tableView.findViewById(R.id.colour_selected);
                                     colourTW.setText(clickedMarker.getString("colour"));
+                                    ImageView carWreck = tableView.findViewById(R.id.carWreckConfirm);
+                                    carWreck.setColorFilter(Color.parseColor(getColourCode(colourTW.getText().toString())));
                                 } catch (Exception e) {
                                     System.out.println(e.fillInStackTrace());
                                 }
@@ -269,46 +275,69 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                         } else {
                             // no marker exit on the point as of yet, create one
-                            final Marker markerName = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory
-                                    .defaultMarker(BitmapDescriptorFactory.HUE_CYAN)));
+                            try {
+                                final Marker markerName = mMap.addMarker(new MarkerOptions().position(latLng).icon(
+                                        getIcon("Černé")));
 
-                            final View tableView = inflater.inflate(R.layout.alert_dialog_layout, null);
-                            alertDialogBuilder.setView(tableView);
-                            alertDialogBuilder.setPositiveButton("Potvrdit", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
 
-                                    Spinner brandsSpinner = tableView.findViewById(R.id.brands_spinner);
-                                    Spinner coloursSpinner = tableView.findViewById(R.id.colours_spinner);
+                                final View tableView = inflater.inflate(R.layout.alert_dialog_layout, null);
+                                final Spinner coloursSpinner = tableView.findViewById(R.id.colours_spinner);
 
-                                    String brand_selected = brandsSpinner.getSelectedItem().toString();
-                                    String colour_selected = coloursSpinner.getSelectedItem().toString();
-
-                                    markerName.setTitle(colour_selected.concat(" auto značky ").concat(brand_selected));
-                                    String urlParameters = getInsertPointParameters(latLng, brand_selected, colour_selected);
-                                    // insert point to points table
-                                    try {
-                                        URL url = new URL(context.getResources().getString(R.string.insert_point));
-                                        getResponseFromHttpUrl(url, urlParameters);
-                                    } catch (Exception e) {
-                                        System.out.println(e.fillInStackTrace());
+                                coloursSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                    @Override
+                                    public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                                        ImageView carWreck = tableView.findViewById(R.id.carWreckNew);
+                                        String colour_selected = coloursSpinner.getSelectedItem().toString();
+                                        carWreck.setColorFilter(Color.parseColor(getColourCode(colour_selected)));
                                     }
 
-                                    // insert user's rating to table
-                                    urlParameters = getInsertUserParameters(latLng, getUID(), 1);
-                                    try {
-                                        URL url = new URL(context.getResources().getString(R.string.insert_user));
-                                        getResponseFromHttpUrl(url, urlParameters);
-                                    } catch (Exception e) {
-                                        System.out.println(e.fillInStackTrace());
+                                    @Override
+                                    public void onNothingSelected(AdapterView<?> parentView) {
+                                        System.out.println("Madre mia...");
                                     }
-                                }
-                            });
+                                });
 
-                            alertDialogBuilder.setNegativeButton("Zrušit", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    markerName.remove();
-                                }
-                            });
+                                alertDialogBuilder.setView(tableView);
+                                alertDialogBuilder.setPositiveButton("Potvrdit", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+
+                                        Spinner brandsSpinner = tableView.findViewById(R.id.brands_spinner);
+                                        Spinner coloursSpinner = tableView.findViewById(R.id.colours_spinner);
+
+                                        String brand_selected = brandsSpinner.getSelectedItem().toString();
+                                        String colour_selected = coloursSpinner.getSelectedItem().toString();
+
+                                        markerName.setTitle(colour_selected.concat(" auto značky ").concat(brand_selected));
+                                        markerName.setIcon(getIcon(colour_selected));
+                                        String urlParameters = getInsertPointParameters(latLng, brand_selected, colour_selected);
+                                        // insert point to points table
+                                        try {
+                                            URL url = new URL(context.getResources().getString(R.string.insert_point));
+                                            getResponseFromHttpUrl(url, urlParameters);
+                                        } catch (Exception e) {
+                                            System.out.println(e.fillInStackTrace());
+                                        }
+
+                                        // insert user's rating to table
+                                        urlParameters = getInsertUserParameters(latLng, getUID(), 1);
+                                        try {
+                                            URL url = new URL(context.getResources().getString(R.string.insert_user));
+                                            getResponseFromHttpUrl(url, urlParameters);
+                                        } catch (Exception e) {
+                                            System.out.println(e.fillInStackTrace());
+                                        }
+                                    }
+                                });
+
+
+                                alertDialogBuilder.setNegativeButton("Zrušit", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        markerName.remove();
+                                    }
+                                });
+                            } catch (Exception e) {
+                                System.out.println(e.fillInStackTrace());
+                            }
                         }
                     } else {
                         alertDialogBuilder.setMessage("Zaměřte prosím mapu větším zoomem pro lepší přesnost");
@@ -353,11 +382,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             try {
                 JSONObject jsonObj = new JSONObject(json_data_array[i]);
                 LatLng latLng = new LatLng(jsonObj.getDouble("latitude"), jsonObj.getDouble("longitude"));
-
-                MarkerOptions markerOptions = new MarkerOptions().position(latLng).icon(bitmapDescriptorFromVector(context, R.drawable.ic_directions_car_black_24dp));
-                        //.icon(BitmapDescriptorFactory
-                        //.defaultMarker(BitmapDescriptorFactory.HUE_CYAN));
-
+                MarkerOptions markerOptions = new MarkerOptions().position(latLng).icon(getIcon(jsonObj.getString("colour")));
                 Marker markerName = mMap.addMarker(markerOptions);
                 markerName.setTitle(jsonObj.getString("colour").concat(" auto značky ").concat(jsonObj.getString("brand")));
             } catch (JSONException e) {
@@ -366,16 +391,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    private BitmapDescriptor bitmapDescriptorFromVector(Context context, @DrawableRes int vectorDrawableResourceId) {
-        Drawable background = ContextCompat.getDrawable(context, R.drawable.ic_directions_car_black_24dp);
-        background.setBounds(0, 0, background.getIntrinsicWidth(), background.getIntrinsicHeight());
-        Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorDrawableResourceId);
-        vectorDrawable.setBounds(40, 20, vectorDrawable.getIntrinsicWidth() + 40, vectorDrawable.getIntrinsicHeight() + 20);
-        Bitmap bitmap = Bitmap.createBitmap(background.getIntrinsicWidth(), background.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        background.draw(canvas);
-        vectorDrawable.draw(canvas);
+    public BitmapDescriptor getIcon(String colour) {
+        Drawable carWreck = context.getResources().getDrawable(R.drawable.ic_directions_car_black_24dp);
+        carWreck.setColorFilter(Color.parseColor(getColourCode(colour)), PorterDuff.Mode.SRC_IN);
+        Bitmap bitmap = drawableToBitmap(carWreck);
         return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+
+    public static Bitmap drawableToBitmap(Drawable drawable) {
+        if (drawable instanceof BitmapDrawable) {
+            return ((BitmapDrawable) drawable).getBitmap();
+        }
+
+        int width = drawable.getIntrinsicWidth();
+        width = width > 0 ? width : 1;
+        int height = drawable.getIntrinsicHeight();
+        height = height > 0 ? height : 1;
+
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        return bitmap;
     }
 
     // communication with DB
@@ -538,6 +576,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private boolean hasPermission(String perm) {
         return (PackageManager.PERMISSION_GRANTED == checkSelfPermission(perm));
+    }
+
+    private String getColourCode(String colour) {
+        String[] colours = context.getResources().getStringArray(R.array.colours);
+        String[] colour_codes = context.getResources().getStringArray(R.array.colour_codes);
+        for (int i = 0; i < colours.length; i++) {
+            if (colour.equals(colours[i])) {
+                return colour_codes[i];
+            }
+        }
+        return null;
     }
 
 }

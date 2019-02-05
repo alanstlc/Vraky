@@ -16,14 +16,14 @@
         tools:context=".MapsActivity" />
 
     <Button
-        style="@style/Widget.AppCompat.Button.Colored"
+        style="@style/Widget.AppCompat.Button.Borderless.Colored"
         android:id="@+id/infoButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:layout_gravity="bottom|right"
-        android:layout_margin="15px"
         android:text="Info"
+        android:textSize="20dp"
 />
 
 </FrameLayout>

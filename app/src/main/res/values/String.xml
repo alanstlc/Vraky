@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
         <string name="title_text">
+        <item>Oznámit vrak</item>
+    </string>
+    <string name="title_text_confirm">
         <item>Potvrdit vrak</item>
     </string>
     <string name="brands_text">
@@ -38,9 +41,9 @@
         <item>Jiné</item>
     </string-array>
     <string-array name="colours">
+        <item>Černé</item>
         <item>Béžové</item>
         <item>Bílé</item>
-        <item>Černé</item>
         <item>Červené</item>
         <item>Fialové</item>
         <item>Hnědé</item>
@@ -52,5 +55,21 @@
         <item>Zelené</item>
         <item>Žluté</item>
         <item>Jiné</item>
+    </string-array>
+    <string-array name="colour_codes">
+        <item>#000000</item>
+        <item>#f5f5dc</item>
+        <item>#ffffff</item>
+        <item>#ff0000</item>
+        <item>#800080</item>
+        <item>#a52a2a</item>
+        <item>#0000ff</item>
+        <item>#ffa500</item>
+        <item>#ffc0cb</item>
+        <item>#c0c0c0</item>
+        <item>#808080</item>
+        <item>#008000</item>
+        <item>#ffff00</item>
+        <item>#000000</item>
     </string-array>
 </resources>

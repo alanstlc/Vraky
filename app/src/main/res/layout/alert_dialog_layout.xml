@@ -10,7 +10,8 @@
         android:layout_height="wrap_content"
         android:hint="@string/title_text"
         android:gravity="center"
-        android:textSize="20sp"
+        android:textSize="25dp"
+        android:layout_margin="30px"
         android:textStyle="bold" />
 
     <TableRow>
@@ -20,14 +21,18 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:hint="@string/brands_text"
-            android:gravity="start" />
+            android:gravity="start"
+            android:layout_margin="10px"
+            android:textSize="15dp"/>
 
         <Spinner
             android:id="@+id/brands_spinner"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:entries="@array/brands"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:layout_margin="10px"
+            android:textSize="15dp"/>
 
     </TableRow>
 
@@ -37,8 +42,10 @@
             android:id="@+id/colours_text"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:gravity="start"
             android:hint="@string/colours_text"
-            android:gravity="start" />
+            android:layout_margin="10px"
+            android:textSize="15dp" />
 
 
         <Spinner
@@ -46,6 +53,16 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:entries="@array/colours"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:layout_margin="10px"
+            android:textSize="15dp"/>
     </TableRow>
+
+    <ImageView
+        android:id="@+id/carWreckNew"
+        android:layout_width="80dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_directions_car_black_24dp"
+        android:layout_gravity="center"/>
+
 </TableLayout>
