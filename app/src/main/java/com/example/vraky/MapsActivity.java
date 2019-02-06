@@ -7,9 +7,14 @@ import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -183,8 +188,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 // check rating of the user
                                 final Boolean userPointRating = userRatedPoint(markerLatLng, getUID());
                                 TextView confirmationTW = tableView.findViewById(R.id.confirmation_text);
-                                confirmationTW.setVisibility(View.VISIBLE);
                                 if (userPointRating != null) {
+                                    confirmationTW.setVisibility(View.VISIBLE);
                                     if (userPointRating == true) {
                                         confirmationTW.setText("Označil jsem, že tu vrak je");
                                     } else {
@@ -395,7 +400,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Drawable carWreck = context.getResources().getDrawable(R.drawable.ic_directions_car_black_24dp);
         carWreck.setColorFilter(Color.parseColor(getColourCode(colour)), PorterDuff.Mode.SRC_IN);
         Bitmap bitmap = drawableToBitmap(carWreck);
-        return BitmapDescriptorFactory.fromBitmap(bitmap);
+        Bitmap icon = addShadow(bitmap, bitmap.getHeight(), bitmap.getWidth(), Color.BLACK, 1, 1, 1);
+        return BitmapDescriptorFactory.fromBitmap(icon);
     }
 
     public static Bitmap drawableToBitmap(Drawable drawable) {
@@ -414,6 +420,38 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         drawable.draw(canvas);
 
         return bitmap;
+    }
+
+    public Bitmap addShadow(final Bitmap bm, final int dstHeight, final int dstWidth, int color, int size, float dx, float dy) {
+        final Bitmap mask = Bitmap.createBitmap(dstWidth, dstHeight, Bitmap.Config.ALPHA_8);
+
+        final Matrix scaleToFit = new Matrix();
+        final RectF src = new RectF(0, 0, bm.getWidth(), bm.getHeight());
+        final RectF dst = new RectF(0, 0, dstWidth - dx, dstHeight - dy);
+        scaleToFit.setRectToRect(src, dst, Matrix.ScaleToFit.CENTER);
+
+        final Matrix dropShadow = new Matrix(scaleToFit);
+        dropShadow.postTranslate(dx, dy);
+
+        final Canvas maskCanvas = new Canvas(mask);
+        final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        maskCanvas.drawBitmap(bm, scaleToFit, paint);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OUT));
+        maskCanvas.drawBitmap(bm, dropShadow, paint);
+
+        final BlurMaskFilter filter = new BlurMaskFilter(size, BlurMaskFilter.Blur.NORMAL);
+        paint.reset();
+        paint.setAntiAlias(true);
+        paint.setColor(color);
+        paint.setMaskFilter(filter);
+        paint.setFilterBitmap(true);
+
+        final Bitmap ret = Bitmap.createBitmap(dstWidth, dstHeight, Bitmap.Config.ARGB_8888);
+        final Canvas retCanvas = new Canvas(ret);
+        retCanvas.drawBitmap(mask, 0,  0, paint);
+        retCanvas.drawBitmap(bm, scaleToFit, null);
+        mask.recycle();
+        return ret;
     }
 
     // communication with DB
