@@ -327,8 +327,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                                         String brand_selected = brandsSpinner.getSelectedItem().toString();
                                         String colour_selected = coloursSpinner.getSelectedItem().toString();
-
-                                        markerName.setTitle(colour_selected.concat(" auto značky ").concat(brand_selected));
+                                        if (colour_selected.equals("Jiné")) {
+                                            markerName.setTitle("Auto značky ".concat(brand_selected));
+                                            if (brand_selected.equals("Jiné")) {
+                                                markerName.setTitle("Auto neznámé značky a barvy");
+                                            }
+                                        } else {
+                                            if (brand_selected.equals("Jiné")) {
+                                                markerName.setTitle(colour_selected.concat(" auto neznámé značky"));
+                                            } else {
+                                                markerName.setTitle(colour_selected.concat(" auto značky ").concat(brand_selected));
+                                            }
+                                        }
                                         markerName.setIcon(getIcon(colour_selected));
                                         String urlParameters = getInsertPointParameters(latLng, brand_selected, colour_selected);
                                         // insert point to points table
@@ -405,7 +415,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 LatLng latLng = new LatLng(jsonObj.getDouble("latitude"), jsonObj.getDouble("longitude"));
                 MarkerOptions markerOptions = new MarkerOptions().position(latLng).icon(getIcon(jsonObj.getString("colour")));
                 Marker markerName = mMap.addMarker(markerOptions);
-                markerName.setTitle(jsonObj.getString("colour").concat(" auto značky ").concat(jsonObj.getString("brand")));
+                String brand_selected = jsonObj.getString("brand");
+                String colour_selected = jsonObj.getString("colour");
+                if (colour_selected.equals("Jiné")) {
+                    markerName.setTitle("Auto značky ".concat(brand_selected));
+                    if (brand_selected.equals("Jiné")) {
+                        markerName.setTitle("Auto neznámé značky a barvy");
+                    }
+                } else {
+                    if (brand_selected.equals("Jiné")) {
+                        markerName.setTitle(colour_selected.concat(" auto neznámé značky"));
+                    } else {
+                        markerName.setTitle(colour_selected.concat(" auto značky ").concat(brand_selected));
+                    }
+                }
+                markerName.setIcon(getIcon(colour_selected));
             } catch (JSONException e) {
                 System.out.println(e.fillInStackTrace());
             }
