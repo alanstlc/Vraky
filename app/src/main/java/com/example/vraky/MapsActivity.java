@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -19,6 +20,9 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.Settings;
@@ -163,7 +167,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     TextView colourTW = tableView.findViewById(R.id.colour_selected);
                                     colourTW.setText(clickedMarker.getString("colour"));
                                     ImageView carWreck = tableView.findViewById(R.id.carWreckConfirm);
-                                    carWreck.setColorFilter(Color.parseColor(getColourCode(colourTW.getText().toString())));
+                                    carWreck.setImageBitmap(getIconBitmap(clickedMarker.getString("colour")));
+                                    TextView sv_text = tableView.findViewById(R.id.sv_link_confirm);
+                                    sv_text.setOnClickListener(new View.OnClickListener() {
+                                        @Override
+                                        public void onClick(View v) {
+                                            openStreetView(markerLatLng);
+                                        }
+                                    });
                                 } catch (Exception e) {
                                     System.out.println(e.fillInStackTrace());
                                 }
@@ -283,22 +294,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             try {
                                 final Marker markerName = mMap.addMarker(new MarkerOptions().position(latLng).icon(
                                         getIcon("Černé")));
-
-
                                 final View tableView = inflater.inflate(R.layout.alert_dialog_layout, null);
-                                final Spinner coloursSpinner = tableView.findViewById(R.id.colours_spinner);
 
+                                TextView sv_text = tableView.findViewById(R.id.sv_link_alert);
+                                sv_text.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        openStreetView(latLng);
+                                    }
+                                });
+
+                                final Spinner coloursSpinner = tableView.findViewById(R.id.colours_spinner);
                                 coloursSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                                     @Override
                                     public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                                         ImageView carWreck = tableView.findViewById(R.id.carWreckNew);
                                         String colour_selected = coloursSpinner.getSelectedItem().toString();
-                                        carWreck.setColorFilter(Color.parseColor(getColourCode(colour_selected)));
+                                        carWreck.setImageBitmap(getIconBitmap(colour_selected));
                                     }
 
                                     @Override
                                     public void onNothingSelected(AdapterView<?> parentView) {
-                                        System.out.println("Madre mia...");
                                     }
                                 });
 
@@ -404,6 +420,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return BitmapDescriptorFactory.fromBitmap(icon);
     }
 
+    public Bitmap getIconBitmap(String colour) {
+        Drawable carWreck = context.getResources().getDrawable(R.drawable.ic_directions_car_black_24dp);
+        carWreck.setColorFilter(Color.parseColor(getColourCode(colour)), PorterDuff.Mode.SRC_IN);
+        Bitmap bitmap = drawableToBitmap(carWreck);
+        return addShadow(bitmap, bitmap.getHeight(), bitmap.getWidth(), Color.BLACK, 1, 1, 1);
+    }
+
     public static Bitmap drawableToBitmap(Drawable drawable) {
         if (drawable instanceof BitmapDrawable) {
             return ((BitmapDrawable) drawable).getBitmap();
@@ -448,7 +471,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         final Bitmap ret = Bitmap.createBitmap(dstWidth, dstHeight, Bitmap.Config.ARGB_8888);
         final Canvas retCanvas = new Canvas(ret);
-        retCanvas.drawBitmap(mask, 0,  0, paint);
+        retCanvas.drawBitmap(mask, 0, 0, paint);
         retCanvas.drawBitmap(bm, scaleToFit, null);
         mask.recycle();
         return ret;
@@ -492,6 +515,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     // when camera is still, load markers
     @Override
     public void onCameraIdle() {
+        if (!isNetworkAvailable()) {
+            AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+            alertDialog.setTitle("Chybí připojení k internetu!");
+            alertDialog.setMessage("Připojte se prosím k internetu a znovu spusťte aplikaci, bez internetu je aplikace zatím bohužel nepoužitelná.");
+            alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Zavřít aplikaci",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            android.os.Process.killProcess(android.os.Process.myPid());
+                            System.exit(1);
+                        }
+                    });
+            alertDialog.setCanceledOnTouchOutside(false);
+            alertDialog.show();
+        }
+
         addMarkers(mMap, getMarkers(mMap));
     }
 
@@ -627,4 +665,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return null;
     }
 
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    private void openStreetView(LatLng latLng) {
+        Uri gmmIntentUri = Uri.parse("google.streetview:cbll=" + latLng.latitude + "," + latLng.longitude);
+        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+        mapIntent.setPackage("com.google.android.apps.maps");
+        startActivity(mapIntent);
+    }
 }

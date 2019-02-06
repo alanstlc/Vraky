@@ -28,18 +28,18 @@
             android:id="@+id/brands_text"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:layout_margin="10px"
             android:gravity="start"
             android:hint="@string/brands_text"
-            android:layout_margin="10px"
             android:textSize="15dp" />
 
         <TextView
             android:id="@+id/brand_selected"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:layout_margin="10px"
             android:hint="@string/brands_text"
             android:textAlignment="center"
-            android:layout_margin="10px"
             android:textSize="15dp" />
 
     </TableRow>
@@ -50,9 +50,9 @@
             android:id="@+id/colours_text"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:layout_margin="10px"
             android:gravity="start"
             android:hint="@string/colours_text"
-            android:layout_margin="10px"
             android:textSize="15dp" />
 
 
@@ -60,12 +60,24 @@
             android:id="@+id/colour_selected"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:layout_margin="10px"
             android:hint="@string/colours_text"
             android:textAlignment="center"
-            android:layout_margin="10px"
             android:textSize="15dp" />
     </TableRow>
 
+
+    <TextView
+        android:id="@+id/sv_link_confirm"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="15px"
+        android:clickable="true"
+        android:gravity="center"
+        android:onClick="onClick"
+        android:text="StreetView"
+        android:textColor="#663366"
+        android:textSize="15dp" />
 
     <TextView
         android:id="@+id/dummy_textview"

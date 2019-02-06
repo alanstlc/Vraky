@@ -65,4 +65,16 @@
         android:src="@drawable/ic_directions_car_black_24dp"
         android:layout_gravity="center"/>
 
+    <TextView
+        android:id="@+id/sv_link_alert"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="15px"
+        android:clickable="true"
+        android:gravity="center"
+        android:onClick="onClick"
+        android:text="StreetView"
+        android:textColor="#663366"
+        android:textSize="15dp" />
+
 </TableLayout>
