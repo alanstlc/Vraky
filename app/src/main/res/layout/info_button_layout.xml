@@ -8,25 +8,35 @@
         android:id="@+id/carWreck"
         android:layout_width="120dp"
         android:layout_height="60dp"
+        android:layout_gravity="center"
         android:layout_marginTop="80px"
-        android:src="@drawable/vrak"
-        android:layout_gravity="center"/>
+        android:src="@drawable/vrak" />
 
     <TextView
         android:id="@+id/autovraky"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="15px"
         android:gravity="center_horizontal|top"
         android:hint="Autovraky"
         android:textSize="30dp"
-        android:layout_margin="15px"
         android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/version"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15px"
+        android:gravity="center_horizontal|top"
+        android:hint="Verze"
+        android:textSize="10dp" />
 
     <TextView
         android:id="@+id/description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="20px"
+        android:layout_margin="30px"
+        android:textAlignment="center"
         android:hint="@string/app_description" />
 
     <TextView
@@ -42,8 +52,17 @@
         android:id="@+id/controlsText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="20px"
+        android:layout_margin="30px"
+        android:textAlignment="center"
         android:autoLink="web|email"
         android:hint="@string/controls_text" />
+
+    <TextView
+        android:id="@+id/countTV"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10px"
+        android:gravity="center"
+        android:hint="Pocet oznamenych vraku" />
 
 </LinearLayout>

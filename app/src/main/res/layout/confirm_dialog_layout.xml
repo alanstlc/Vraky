@@ -29,6 +29,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_margin="10px"
+            android:paddingLeft="100px"
             android:gravity="start"
             android:hint="@string/brands_text"
             android:textSize="15dp" />
@@ -51,6 +52,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_margin="10px"
+            android:paddingLeft="100px"
             android:gravity="start"
             android:hint="@string/colours_text"
             android:textSize="15dp" />
@@ -75,7 +77,7 @@
         android:clickable="true"
         android:gravity="center"
         android:onClick="onClick"
-        android:text="StreetView"
+        android:text="Street View"
         android:textColor="#663366"
         android:textSize="15dp" />
 

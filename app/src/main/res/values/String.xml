@@ -54,6 +54,7 @@
         <item>Šedé</item>
         <item>Zelené</item>
         <item>Žluté</item>
+        <item>Zlaté</item>
         <item>Jiné</item>
     </string-array>
     <string-array name="colour_codes">
@@ -63,13 +64,14 @@
         <item>#ff0000</item>
         <item>#800080</item>
         <item>#a52a2a</item>
-        <item>#0000ff</item>
+        <item>#0080ff</item>
         <item>#ffa500</item>
         <item>#ffc0cb</item>
         <item>#c0c0c0</item>
         <item>#808080</item>
         <item>#008000</item>
         <item>#ffff00</item>
+        <item>#ffd700</item>
         <item>#000000</item>
     </string-array>
 </resources>
