@@ -1,6 +1,7 @@
-package com.example.vraky;
+package app.vraky;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -28,7 +29,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -58,12 +61,12 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
-import static com.example.vraky.GetParams.getBoundariesParameters;
-import static com.example.vraky.GetParams.getDeletePointParameters;
-import static com.example.vraky.GetParams.getDeleteUserParameters;
-import static com.example.vraky.GetParams.getInsertPointParameters;
-import static com.example.vraky.GetParams.getInsertUserParameters;
-import static com.example.vraky.GetParams.isCSSR;
+import static app.vraky.GetParams.getBoundariesParameters;
+import static app.vraky.GetParams.getDeletePointParameters;
+import static app.vraky.GetParams.getDeleteUserParameters;
+import static app.vraky.GetParams.getInsertPointParameters;
+import static app.vraky.GetParams.getInsertUserParameters;
+import static app.vraky.GetParams.isCSSR;
 
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnCameraIdleListener {
@@ -71,8 +74,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     final Context context = this;
     private static final String[] INITIAL_PERMS = {
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.READ_CONTACTS
+            Manifest.permission.ACCESS_FINE_LOCATION
     };
     private static final String[] LOCATION_PERMS = {
             Manifest.permission.ACCESS_FINE_LOCATION
@@ -80,7 +82,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static final int INITIAL_REQUEST = 1337;
     private static final int LOCATION_REQUEST = INITIAL_REQUEST + 3;
 
-    private boolean firstRun = true;
+    // move the camera to Vrsovice if no network_provider found
+    private LatLng startLocation = new LatLng(50.069175, 14.453255);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +91,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (!canAccessLocation()) {
             requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
         }
+
         setContentView(R.layout.activity_maps);
         // obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -101,18 +105,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
         mMap = googleMap;
         mMap.setOnCameraIdleListener(this);
-        mMap.setMyLocationEnabled(true);
-
-        // move the camera to Vrsovice if no network_provider found
-        LatLng startLocation = new LatLng(50.069175, 14.453255);
 
         if (canAccessLocation()) {
             LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             boolean network_enabled = locManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
             if (network_enabled) {
+                mMap.setMyLocationEnabled(true);
                 Location location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                 startLocation = new LatLng(location.getLatitude(), location.getLongitude());
             }
@@ -160,12 +162,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-        SharedPreferences pref = MapsActivity.this.getSharedPreferences("AutovrakyPreferences",0);
-        firstRun = pref.getBoolean("firstRun", true);
-        if (firstRun) {
+        SharedPreferences pref = MapsActivity.this.getSharedPreferences("AutovrakyPreferences", 0);
+        if ( pref.getBoolean("firstRun", true)){
             infoButton.callOnClick();
             SharedPreferences.Editor editor = pref.edit();
-            editor.putBoolean("firstRun",false);
+            editor.putBoolean("firstRun", false);
             editor.commit();
         }
 

@@ -1,4 +1,4 @@
-package com.example.vraky;
+package app.vraky;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.example.vraky", appContext.getPackageName());
+        assertEquals("app.vraky", appContext.getPackageName());
     }
 }

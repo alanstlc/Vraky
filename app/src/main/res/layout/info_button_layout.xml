@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<ScrollView>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:scrollbarAlwaysDrawVerticalTrack="true"
+    android:scrollbars="vertical">
 
     <ImageView
         android:id="@+id/carWreck"
@@ -36,8 +39,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="30px"
-        android:textAlignment="center"
-        android:hint="@string/app_description" />
+        android:hint="@string/app_description"
+        android:textAlignment="center" />
 
     <TextView
         android:id="@+id/controls"
@@ -53,9 +56,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="30px"
-        android:textAlignment="center"
         android:autoLink="web|email"
-        android:hint="@string/controls_text" />
+        android:hint="@string/controls_text"
+        android:textAlignment="center" />
 
     <TextView
         android:id="@+id/countTV"
@@ -66,3 +69,4 @@
         android:hint="Pocet oznamenych vraku" />
 
 </LinearLayout>
+    </ScrollView>

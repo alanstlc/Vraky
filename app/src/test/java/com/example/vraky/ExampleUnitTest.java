@@ -1,4 +1,4 @@
-package com.example.vraky;
+package app.vraky;
 
 import org.junit.Test;
 

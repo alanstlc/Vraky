@@ -1,4 +1,4 @@
-package com.example.vraky;
+package app.vraky;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;

@@ -2,5 +2,5 @@
     <string name="app_name">Autovraky</string>
     <string name="title_activity_maps">Autovraky</string>
     <string name="app_description">Aplikace Autovraky vznikla k tomu, aby poukázala na problematiku neodtahovaných vraků v našich ulicích. První verze aplikace Autovraky je zaměřená na hrubý sběr dat a na následné získání přehledu ohledně aktuálního stavu. Jakékoliv návrhy pro zlepšení jsou vítány na emailu alan@stolc.net.</string>
-    <string name="controls_text">Pro zjištení základních informací o vraku jednou kliknětě na vrak. Pro  (ne)potvrzení stávajícího vraku dlouze stiskněte na vrak na mapě. Pro zadání nového vraku dlouze stiskněte místo na mapě v dostatečném přiblížení. Podívejte se, zdali náhodou vrak není nafocen přes rozhraní Street View. Zadejte poté jeho značku a barvu a vrak potvrďte.</string>
+    <string name="controls_text">Pro zjištení základních informací o vraku jednou klikněte na vrak. Pro (ne)potvrzení stávajícího vraku dlouze stiskněte na vrak na mapě. Pro zadání nového vraku dlouze stiskněte místo na mapě v dostatečném přiblížení. Podívejte se, zdali náhodou vrak není nafocen přes rozhraní Street View. Zadejte poté jeho značku a barvu a vrak potvrďte.</string>
 </resources>
