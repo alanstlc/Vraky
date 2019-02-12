@@ -39,8 +39,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.google.android.gms.common.util.ArrayUtils;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -130,12 +130,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_favorite) {
-            final SharedPreferences pref = MapsActivity.this.getSharedPreferences("AutovrakyPreferences", 0);
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
-            AlertDialog alertDialog = alertDialogBuilder.create();
-            LayoutInflater inflater = alertDialog.getLayoutInflater();
-            final View infoView = inflater.inflate(R.layout.info_button_layout, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        LayoutInflater inflater = alertDialog.getLayoutInflater();
+        if (id == R.id.oAplikaci) {
+            final View infoView = inflater.inflate(R.layout.oaplikaci, null);
             // set version at info window
             try {
                 PackageInfo pInfo = context.getPackageManager().getPackageInfo(getPackageName(), 0);
@@ -145,6 +144,29 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             } catch (PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
             }
+            alertDialogBuilder.setView(infoView);
+            alertDialogBuilder.setNegativeButton("Ok", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                }
+            });
+            alertDialog = alertDialogBuilder.create();
+            alertDialog.show();
+            return true;
+        }
+
+        if (id == R.id.ovladani) {
+            final View infoView = inflater.inflate(R.layout.ovladani, null);
+            alertDialogBuilder.setView(infoView);
+            alertDialogBuilder.setNegativeButton("Ok", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                }
+            });
+            alertDialog = alertDialogBuilder.create();
+            alertDialog.show();
+            return true;
+        }
+        if (id == R.id.statistiky) {
+            final View infoView = inflater.inflate(R.layout.statistiky, null);
             // get info about total count of carwrecks
             try {
                 URL url = new URL(context.getResources().getString(R.string.point_count));
@@ -153,21 +175,28 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 json_data.split("\\|");
                 JSONObject jsonObject = new JSONObject(json_data);
                 String count = jsonObject.getString("count");
-                TextView countTV = infoView.findViewById(R.id.countTV);
-                countTV.setText("Počet vraků v databázi: ".concat(count));
+                TextView countTotalTV = infoView.findViewById(R.id.countTotalTV);
+                countTotalTV.setText("Počet vraků v databázi: ".concat(count));
+                url = new URL(context.getResources().getString(R.string.user_count));
+                json_data = getResponseFromHttpUrl(url, "user_id=".concat(getUID()));
+                json_data = json_data.substring(0, json_data.length() - 1);
+                json_data.split("\\|");
+                jsonObject = new JSONObject(json_data);
+                count = jsonObject.getString("count");
+                TextView countMineTV = infoView.findViewById(R.id.countMineTV);
+                countMineTV.setText("Počet mnou nahlášených vraků: ".concat(count));
             } catch (Exception e) {
                 System.out.println(e.fillInStackTrace());
             }
-
             alertDialogBuilder.setView(infoView);
             alertDialogBuilder.setNegativeButton("Ok", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {}
+                public void onClick(DialogInterface dialog, int id) {
+                }
             });
             alertDialog = alertDialogBuilder.create();
             alertDialog.show();
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -197,7 +226,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
                 AlertDialog alertDialog = alertDialogBuilder.create();
                 LayoutInflater inflater = alertDialog.getLayoutInflater();
-                final View infoView = inflater.inflate(R.layout.info_button_layout, null);
+                final View infoView = inflater.inflate(R.layout.oaplikaci, null);
                 // set version at info window
                 try {
                     PackageInfo pInfo = context.getPackageManager().getPackageInfo(getPackageName(), 0);
@@ -224,7 +253,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 alertDialogBuilder.setView(infoView);
                 alertDialogBuilder.setNegativeButton("Ok", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        if (pref.getBoolean("firstRun", true)){
+                        if (pref.getBoolean("firstRun", true)) {
                             SharedPreferences.Editor editor = pref.edit();
                             editor.putBoolean("firstRun", false);
                             editor.commit();
@@ -240,14 +269,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             } else {
                                 requestPermissions(LOCATION_PERMS, LOCATION_REQUEST);
                             }
-                    }}
+                        }
+                    }
                 });
                 alertDialog = alertDialogBuilder.create();
                 alertDialog.show();
             }
         });
 
-        if ( pref.getBoolean("firstRun", true)){
+        if (pref.getBoolean("firstRun", true)) {
             infoButton.callOnClick();
         }
 
@@ -379,13 +409,34 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                             } catch (Exception e) {
                                                 System.out.println(e.fillInStackTrace());
                                             }
-                                            // insert user's negative rating
-                                            urlParameters = getInsertUserParameters(markerLatLng, getUID(), 0);
-                                            try {
-                                                URL url = new URL(context.getResources().getString(R.string.insert_user));
-                                                getResponseFromHttpUrl(url, urlParameters);
-                                            } catch (Exception e) {
-                                                System.out.println(e.fillInStackTrace());
+
+                                            if (contains(ratingsWithPoint(markerLatLng), 1)) {
+                                                // insert user's negative rating
+                                                urlParameters = getInsertUserParameters(markerLatLng, getUID(), 0);
+                                                try {
+                                                    URL url = new URL(context.getResources().getString(R.string.insert_user));
+                                                    getResponseFromHttpUrl(url, urlParameters);
+                                                } catch (Exception e) {
+                                                    System.out.println(e.fillInStackTrace());
+                                                }
+                                            } else { // last positive rating, delete all negative ratings
+                                                urlParameters = getDeletePointParameters(markerLatLng);
+                                                try {
+                                                    URL url = new URL(context.getResources().getString(R.string.delete_users));
+                                                    getResponseFromHttpUrl(url, urlParameters);
+                                                } catch (Exception e) {
+                                                    System.out.println(e.fillInStackTrace());
+                                                }
+                                                // delete point from map
+                                                urlParameters = getDeletePointParameters(markerLatLng);
+                                                try {
+                                                    URL url = new URL(context.getResources().getString(R.string.delete_point));
+                                                    getResponseFromHttpUrl(url, urlParameters);
+                                                } catch (Exception e) {
+                                                    System.out.println(e.fillInStackTrace());
+                                                }
+                                                mMap.clear();
+                                                addMarkers(mMap, getMarkers(mMap));
                                             }
                                         }
                                     }
@@ -778,7 +829,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         } catch (Exception e) {
             System.out.println(e.fillInStackTrace());
         }
-        return null;
+        return new int[0];
     }
 
     // create String with connection urlParameters
@@ -822,5 +873,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
         mapIntent.setPackage("com.google.android.apps.maps");
         startActivity(mapIntent);
+    }
+
+    public boolean contains(final int[] array, final int key) {
+        return ArrayUtils.contains(array, key);
     }
 }

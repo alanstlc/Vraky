@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:scrollbarAlwaysDrawVerticalTrack="true"
+    android:scrollbars="vertical">
+
+    <TextView
+        android:id="@+id/controls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginTop="50px"
+        android:hint="Statistiky"
+        android:textSize="20dp"
+        android:textStyle="bold" />
+
+    <TextView
+    android:id="@+id/countTotalTV"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="30px"
+    android:gravity="center"
+    android:hint="Pocet oznamenych vraku" />
+
+    <TextView
+        android:id="@+id/countMineTV"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="30px"
+        android:gravity="center"
+        android:hint="Pocet mnou oznamenych vraku" />
+
+</LinearLayout>
+    </ScrollView>
