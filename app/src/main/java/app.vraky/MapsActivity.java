@@ -1,7 +1,6 @@
 package app.vraky;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -29,16 +28,18 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -69,7 +70,7 @@ import static app.vraky.GetParams.getInsertUserParameters;
 import static app.vraky.GetParams.isCSSR;
 
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnCameraIdleListener {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnCameraIdleListener {
 
     private GoogleMap mMap;
     final Context context = this;
@@ -93,14 +94,81 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         setContentView(R.layout.activity_maps);
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        setSupportActionBar(myToolbar);
+        myToolbar.setTitleTextAppearance(this, R.style.TitleFont);
+        myToolbar.setTitleMarginStart(50);
+        myToolbar.setTitleTextColor(Color.WHITE);
         // obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+
         mapFragment.getMapAsync(this);
         // curl in main thread needs this
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_favorite) {
+            final SharedPreferences pref = MapsActivity.this.getSharedPreferences("AutovrakyPreferences", 0);
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
+            AlertDialog alertDialog = alertDialogBuilder.create();
+            LayoutInflater inflater = alertDialog.getLayoutInflater();
+            final View infoView = inflater.inflate(R.layout.info_button_layout, null);
+            // set version at info window
+            try {
+                PackageInfo pInfo = context.getPackageManager().getPackageInfo(getPackageName(), 0);
+                String version = pInfo.versionName;
+                TextView versionTV = infoView.findViewById(R.id.version);
+                versionTV.setText("Verze ".concat(version));
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
+            // get info about total count of carwrecks
+            try {
+                URL url = new URL(context.getResources().getString(R.string.point_count));
+                String json_data = getResponseFromHttpUrl(url, "");
+                json_data = json_data.substring(0, json_data.length() - 1);
+                json_data.split("\\|");
+                JSONObject jsonObject = new JSONObject(json_data);
+                String count = jsonObject.getString("count");
+                TextView countTV = infoView.findViewById(R.id.countTV);
+                countTV.setText("Počet vraků v databázi: ".concat(count));
+            } catch (Exception e) {
+                System.out.println(e.fillInStackTrace());
+            }
+
+            alertDialogBuilder.setView(infoView);
+            alertDialogBuilder.setNegativeButton("Ok", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {}
+            });
+            alertDialog = alertDialogBuilder.create();
+            alertDialog.show();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -122,6 +190,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             requestPermissions(LOCATION_PERMS, LOCATION_REQUEST);
         }
 
+        final SharedPreferences pref = MapsActivity.this.getSharedPreferences("AutovrakyPreferences", 0);
         Button infoButton = getWindow().getDecorView().findViewById(R.id.infoButton);
         infoButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -155,19 +224,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 alertDialogBuilder.setView(infoView);
                 alertDialogBuilder.setNegativeButton("Ok", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                    }
+                        if (pref.getBoolean("firstRun", true)){
+                            SharedPreferences.Editor editor = pref.edit();
+                            editor.putBoolean("firstRun", false);
+                            editor.commit();
+                            if (canAccessLocation()) {
+                                LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                                boolean network_enabled = locManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+                                if (network_enabled) {
+                                    mMap.setMyLocationEnabled(true);
+                                    Location location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                                    startLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(startLocation, 18));
+                                }
+                            } else {
+                                requestPermissions(LOCATION_PERMS, LOCATION_REQUEST);
+                            }
+                    }}
                 });
                 alertDialog = alertDialogBuilder.create();
                 alertDialog.show();
             }
         });
 
-        SharedPreferences pref = MapsActivity.this.getSharedPreferences("AutovrakyPreferences", 0);
         if ( pref.getBoolean("firstRun", true)){
             infoButton.callOnClick();
-            SharedPreferences.Editor editor = pref.edit();
-            editor.putBoolean("firstRun", false);
-            editor.commit();
         }
 
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(startLocation, 18));
