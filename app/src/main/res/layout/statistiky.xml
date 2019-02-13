@@ -21,7 +21,7 @@
     android:id="@+id/countTotalTV"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="30px"
+    android:layout_marginTop="30px"
     android:gravity="center"
     android:hint="Pocet oznamenych vraku" />
 
@@ -29,7 +29,6 @@
         android:id="@+id/countMineTV"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="30px"
         android:gravity="center"
         android:hint="Pocet mnou oznamenych vraku" />
 

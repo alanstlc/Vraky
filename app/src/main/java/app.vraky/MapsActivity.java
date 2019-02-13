@@ -37,6 +37,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -94,6 +95,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         setContentView(R.layout.activity_maps);
+        View locationButton = ((View) findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
+        RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) locationButton.getLayoutParams();
+// position on right bottom
+        rlp.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+        rlp.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
+        rlp.setMargins(0, 120, 180, 0);
+
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
         myToolbar.setTitleTextAppearance(this, R.style.TitleFont);
@@ -185,8 +193,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 count = jsonObject.getString("count");
                 TextView countMineTV = infoView.findViewById(R.id.countMineTV);
                 countMineTV.setText("Počet mnou nahlášených vraků: ".concat(count));
-            } catch (Exception e) {
-                System.out.println(e.fillInStackTrace());
+            } catch (Exception e) {e.printStackTrace();
             }
             alertDialogBuilder.setView(infoView);
             alertDialogBuilder.setNegativeButton("Ok", new DialogInterface.OnClickListener() {
@@ -246,8 +253,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     String count = jsonObject.getString("count");
                     TextView countTV = infoView.findViewById(R.id.countTV);
                     countTV.setText("Počet vraků v databázi: ".concat(count));
-                } catch (Exception e) {
-                    System.out.println(e.fillInStackTrace());
+                } catch (Exception e) {e.printStackTrace();
                 }
 
                 alertDialogBuilder.setView(infoView);
@@ -296,159 +302,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     // check whether any marker was clicked
                     JSONObject clickedMarker = proximityCheck(mMap, latLng);
                     if (clickedMarker != null) {
-
-                        final View tableView = inflater.inflate(R.layout.confirm_dialog_layout, null);
-                        alertDialogBuilder.setView(tableView);
-
                         try {
-                            final LatLng markerLatLng = new LatLng(clickedMarker.getDouble("latitude"), clickedMarker.getDouble("longitude"));
-                            try {
-                                TextView brandTW = tableView.findViewById(R.id.brand_selected);
-                                brandTW.setText(clickedMarker.getString("brand"));
-                                TextView colourTW = tableView.findViewById(R.id.colour_selected);
-                                colourTW.setText(clickedMarker.getString("colour"));
-                                ImageView carWreck = tableView.findViewById(R.id.carWreckConfirm);
-                                carWreck.setImageBitmap(getIconBitmap(clickedMarker.getString("colour")));
-                                TextView sv_text = tableView.findViewById(R.id.sv_link_confirm);
-                                sv_text.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
-                                        openStreetView(markerLatLng);
-                                    }
-                                });
-                            } catch (Exception e) {
-                                System.out.println(e.fillInStackTrace());
-                            }
-                            // count number of raters
-                            int[] ratings = ratingsWithPoint(markerLatLng);
-                            TextView headcountTW = tableView.findViewById(R.id.headcount_text);
-                            headcountTW.setVisibility(View.VISIBLE);
-                            int positive_users = 0;
-                            int negative_users = 0;
-                            for (int i = 0; i < ratings.length; i++) {
-                                if (ratings[i] == 1)
-                                    positive_users++;
-                                else
-                                    negative_users++;
-                            }
-                            headcountTW.setText("Počet uživatelů, kteří nahlásili vrak: " + Integer.toString(positive_users));
-                            if (negative_users > 0) {
-                                TextView fakeHeadcountTW = tableView.findViewById(R.id.fake_headcount_text);
-                                fakeHeadcountTW.setVisibility(View.VISIBLE);
-                                fakeHeadcountTW.setText("Počet uživatelů, kteří nahlásili, že tu nic není: " + Integer.toString(negative_users));
-                            }
-                            // check rating of the user
-                            final Boolean userPointRating = userRatedPoint(markerLatLng, getUID());
-                            TextView confirmationTW = tableView.findViewById(R.id.confirmation_text);
-                            if (userPointRating != null) {
-                                confirmationTW.setVisibility(View.VISIBLE);
-                                if (userPointRating == true) {
-                                    confirmationTW.setText("Označil jsem, že tu vrak je");
-                                } else {
-                                    confirmationTW.setText("Označil jsem, že tu vrak není");
-                                }
-                            }
+                            alreadyClickedMarker(clickedMarker);
 
-                            if (userPointRating == null || userPointRating == false) {
-                                alertDialogBuilder.setPositiveButton("Vrak tu je", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        if (userPointRating != null) {
-                                            // delete user's negative rating
-                                            String urlParameters = getDeleteUserParameters(markerLatLng, getUID());
-                                            try {
-                                                URL url = new URL(context.getResources().getString(R.string.delete_user));
-                                                getResponseFromHttpUrl(url, urlParameters);
-                                            } catch (Exception e) {
-                                                System.out.println(e.fillInStackTrace());
-                                            }
-                                        }
-                                        // insert user's positive rating
-                                        String urlParameters = getInsertUserParameters(markerLatLng, getUID(), 1);
-                                        try {
-                                            URL url = new URL(context.getResources().getString(R.string.insert_user));
-                                            getResponseFromHttpUrl(url, urlParameters);
-                                        } catch (Exception e) {
-                                            System.out.println(e.fillInStackTrace());
-                                        }
-                                    }
-                                });
-                            }
-                            // insert user to users table
-                            if (userPointRating == null || userPointRating == true) {
-                                alertDialogBuilder.setNeutralButton("Vrak tu není", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        // if this is the last user of this point, delete the point and user
-                                        String[] pointRaters = usersWithPoint(markerLatLng);
-                                        if (pointRaters.length == 1 && pointRaters[0].equals(getUID())) {
-                                            // delete user
-                                            String urlParameters = getDeleteUserParameters(markerLatLng, getUID());
-                                            try {
-                                                URL url = new URL(context.getResources().getString(R.string.delete_user));
-                                                getResponseFromHttpUrl(url, urlParameters);
-                                            } catch (Exception e) {
-                                                System.out.println(e.fillInStackTrace());
-                                            }
-                                            // delete point
-                                            urlParameters = getDeletePointParameters(markerLatLng);
-                                            try {
-                                                URL url = new URL(context.getResources().getString(R.string.delete_point));
-                                                getResponseFromHttpUrl(url, urlParameters);
-                                            } catch (Exception e) {
-                                                System.out.println(e.fillInStackTrace());
-                                            }
-                                            // delete point from map
-                                            mMap.clear();
-                                            addMarkers(mMap, getMarkers(mMap));
-
-                                        } else {
-                                            // delete user's positive rating
-                                            String urlParameters = getDeleteUserParameters(markerLatLng, getUID());
-                                            try {
-                                                URL url = new URL(context.getResources().getString(R.string.delete_user));
-                                                getResponseFromHttpUrl(url, urlParameters);
-                                            } catch (Exception e) {
-                                                System.out.println(e.fillInStackTrace());
-                                            }
-
-                                            if (contains(ratingsWithPoint(markerLatLng), 1)) {
-                                                // insert user's negative rating
-                                                urlParameters = getInsertUserParameters(markerLatLng, getUID(), 0);
-                                                try {
-                                                    URL url = new URL(context.getResources().getString(R.string.insert_user));
-                                                    getResponseFromHttpUrl(url, urlParameters);
-                                                } catch (Exception e) {
-                                                    System.out.println(e.fillInStackTrace());
-                                                }
-                                            } else { // last positive rating, delete all negative ratings
-                                                urlParameters = getDeletePointParameters(markerLatLng);
-                                                try {
-                                                    URL url = new URL(context.getResources().getString(R.string.delete_users));
-                                                    getResponseFromHttpUrl(url, urlParameters);
-                                                } catch (Exception e) {
-                                                    System.out.println(e.fillInStackTrace());
-                                                }
-                                                // delete point from map
-                                                urlParameters = getDeletePointParameters(markerLatLng);
-                                                try {
-                                                    URL url = new URL(context.getResources().getString(R.string.delete_point));
-                                                    getResponseFromHttpUrl(url, urlParameters);
-                                                } catch (Exception e) {
-                                                    System.out.println(e.fillInStackTrace());
-                                                }
-                                                mMap.clear();
-                                                addMarkers(mMap, getMarkers(mMap));
-                                            }
-                                        }
-                                    }
-                                });
-                            }
-                            alertDialogBuilder.setNegativeButton("Zrušit", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                }
-                            });
-
-                        } catch (Exception e) {
-                            System.out.println(e.fillInStackTrace());
+                        } catch (Exception e) {e.printStackTrace();
                         }
 
                     } else {
@@ -509,8 +366,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                         try {
                                             URL url = new URL(context.getResources().getString(R.string.insert_point));
                                             getResponseFromHttpUrl(url, urlParameters);
-                                        } catch (Exception e) {
-                                            System.out.println(e.fillInStackTrace());
+                                        } catch (Exception e) {e.printStackTrace();
                                         }
 
                                         // insert user's rating to table
@@ -518,8 +374,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                         try {
                                             URL url = new URL(context.getResources().getString(R.string.insert_user));
                                             getResponseFromHttpUrl(url, urlParameters);
-                                        } catch (Exception e) {
-                                            System.out.println(e.fillInStackTrace());
+                                        } catch (Exception e) {e.printStackTrace();
                                         }
                                     }
                                 });
@@ -530,8 +385,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                         markerName.remove();
                                     }
                                 });
-                            } catch (Exception e) {
-                                System.out.println(e.fillInStackTrace());
+                                alertDialog = alertDialogBuilder.create();
+                                alertDialog.setCanceledOnTouchOutside(false);
+                                alertDialog.show();
+                            } catch (Exception e) {e.printStackTrace();
                             }
                         } else {
                             alertDialogBuilder.setMessage("Zaměřte prosím mapu větším zoomem pro lepší přesnost");
@@ -539,6 +396,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 public void onClick(DialogInterface dialog, int id) {
                                 }
                             });
+                            alertDialog = alertDialogBuilder.create();
+                            alertDialog.setCanceledOnTouchOutside(false);
+                            alertDialog.show();
                         }
                     }
 
@@ -548,13 +408,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         public void onClick(DialogInterface dialog, int id) {
                         }
                     });
+                    alertDialog = alertDialogBuilder.create();
+                    alertDialog.setCanceledOnTouchOutside(false);
+                    alertDialog.show();
                 }
-                alertDialog = alertDialogBuilder.create();
-                alertDialog.setCanceledOnTouchOutside(false);
-                alertDialog.show();
             }
         });
     }
+
 
     // load markers from db
     public String[] getMarkers(GoogleMap mMap) {
@@ -566,8 +427,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 URL url = new URL(context.getResources().getString(R.string.select_points));
                 json_data = getResponseFromHttpUrl(url, urlParameters);
                 json_data = json_data.substring(0, json_data.length() - 1);
-            } catch (Exception e) {
-                System.out.println(e.fillInStackTrace());
+            } catch (Exception e) {e.printStackTrace();
             }
             return json_data.split("\\|");
         }
@@ -599,7 +459,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                     markerName.setIcon(getIcon(colour_selected));
                 } catch (JSONException e) {
-                    System.out.println(e.fillInStackTrace());
+                    e.printStackTrace();
                 }
             }
         }
@@ -725,8 +585,25 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             alertDialog.setCanceledOnTouchOutside(false);
             alertDialog.show();
         }
-
         addMarkers(mMap, getMarkers(mMap));
+        mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+            @Override
+            public void onInfoWindowClick(Marker marker) {
+                LatLng markerLatLng = new LatLng(marker.getPosition().latitude, marker.getPosition().longitude);
+                try {
+                    URL url = new URL(context.getResources().getString(R.string.select_point));
+                    String urlParameters = getDeletePointParameters(markerLatLng);
+                    String json_data = getResponseFromHttpUrl(url, urlParameters);
+                    if (!json_data.equals("0")) {
+                        json_data = json_data.substring(0, json_data.length() - 1);
+                        String[] json_data_array = json_data.split("\\|");
+                        JSONObject jsonObj = new JSONObject(json_data_array[0]);
+                        alreadyClickedMarker(jsonObj);
+                    }
+                }
+                catch (Exception e) {e.printStackTrace();}
+            }
+        });
     }
 
     public String getUID() {
@@ -771,7 +648,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 else return false;
             }
         } catch (Exception e) {
-            System.out.println(e.fillInStackTrace());
+            e.printStackTrace();
         }
         return null;
     }
@@ -799,7 +676,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return users_array;
             }
         } catch (Exception e) {
-            System.out.println(e.fillInStackTrace());
+            e.printStackTrace();
         }
         return null;
     }
@@ -827,7 +704,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return ratings_array;
             }
         } catch (Exception e) {
-            System.out.println(e.fillInStackTrace());
+            e.printStackTrace();
         }
         return new int[0];
     }
@@ -877,5 +754,166 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public boolean contains(final int[] array, final int key) {
         return ArrayUtils.contains(array, key);
+    }
+
+    public void alreadyClickedMarker(JSONObject clickedMarker) {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        LayoutInflater inflater = alertDialog.getLayoutInflater();
+        final View tableView = inflater.inflate(R.layout.confirm_dialog_layout, null);
+        alertDialogBuilder.setView(tableView);
+        LatLng latLng = null;
+        try {
+            latLng = new LatLng(clickedMarker.getDouble("latitude"), clickedMarker.getDouble("longitude"));
+            } catch (Exception e){e.printStackTrace();}
+        final LatLng markerLatLng = latLng;
+
+        try {
+            TextView brandTW = tableView.findViewById(R.id.brand_selected);
+            brandTW.setText(clickedMarker.getString("brand"));
+            TextView colourTW = tableView.findViewById(R.id.colour_selected);
+            colourTW.setText(clickedMarker.getString("colour"));
+            ImageView carWreck = tableView.findViewById(R.id.carWreckConfirm);
+            carWreck.setImageBitmap(getIconBitmap(clickedMarker.getString("colour")));
+            TextView sv_text = tableView.findViewById(R.id.sv_link_confirm);
+            sv_text.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    openStreetView(markerLatLng);
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // count number of raters
+        int[] ratings = ratingsWithPoint(markerLatLng);
+        TextView headcountTW = tableView.findViewById(R.id.headcount_text);
+        headcountTW.setVisibility(View.VISIBLE);
+        int positive_users = 0;
+        int negative_users = 0;
+        for (int i = 0; i < ratings.length; i++) {
+            if (ratings[i] == 1)
+                positive_users++;
+            else
+                negative_users++;
+        }
+        headcountTW.setText("Počet uživatelů, kteří nahlásili vrak: " + Integer.toString(positive_users));
+        if (negative_users > 0) {
+            TextView fakeHeadcountTW = tableView.findViewById(R.id.fake_headcount_text);
+            fakeHeadcountTW.setVisibility(View.VISIBLE);
+            fakeHeadcountTW.setText("Počet uživatelů, kteří nahlásili, že tu nic není: " + Integer.toString(negative_users));
+        }
+        // check rating of the user
+        final Boolean userPointRating = userRatedPoint(markerLatLng, getUID());
+        TextView confirmationTW = tableView.findViewById(R.id.confirmation_text);
+        if (userPointRating != null) {
+            confirmationTW.setVisibility(View.VISIBLE);
+            if (userPointRating == true) {
+                confirmationTW.setText("Označil jsem, že tu vrak je");
+            } else {
+                confirmationTW.setText("Označil jsem, že tu vrak není");
+            }
+        }
+
+        if (userPointRating == null || userPointRating == false) {
+            alertDialogBuilder.setPositiveButton("Vrak tu je", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    if (userPointRating != null) {
+                        // delete user's negative rating
+                        String urlParameters = getDeleteUserParameters(markerLatLng, getUID());
+                        try {
+                            URL url = new URL(context.getResources().getString(R.string.delete_user));
+                            getResponseFromHttpUrl(url, urlParameters);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    // insert user's positive rating
+                    String urlParameters = getInsertUserParameters(markerLatLng, getUID(), 1);
+                    try {
+                        URL url = new URL(context.getResources().getString(R.string.insert_user));
+                        getResponseFromHttpUrl(url, urlParameters);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+        // insert user to users table
+        if (userPointRating == null || userPointRating == true) {
+            alertDialogBuilder.setNeutralButton("Vrak tu není", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    // if this is the last user of this point, delete the point and user
+                    String[] pointRaters = usersWithPoint(markerLatLng);
+                    if (pointRaters.length == 1 && pointRaters[0].equals(getUID())) {
+                        // delete user
+                        String urlParameters = getDeleteUserParameters(markerLatLng, getUID());
+                        try {
+                            URL url = new URL(context.getResources().getString(R.string.delete_user));
+                            getResponseFromHttpUrl(url, urlParameters);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        // delete point
+                        urlParameters = getDeletePointParameters(markerLatLng);
+                        try {
+                            URL url = new URL(context.getResources().getString(R.string.delete_point));
+                            getResponseFromHttpUrl(url, urlParameters);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        // delete point from map
+                        mMap.clear();
+                        addMarkers(mMap, getMarkers(mMap));
+
+                    } else {
+                        // delete user's positive rating
+                        String urlParameters = getDeleteUserParameters(markerLatLng, getUID());
+                        try {
+                            URL url = new URL(context.getResources().getString(R.string.delete_user));
+                            getResponseFromHttpUrl(url, urlParameters);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                        if (contains(ratingsWithPoint(markerLatLng), 1)) {
+                            // insert user's negative rating
+                            urlParameters = getInsertUserParameters(markerLatLng, getUID(), 0);
+                            try {
+                                URL url = new URL(context.getResources().getString(R.string.insert_user));
+                                getResponseFromHttpUrl(url, urlParameters);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else { // last positive rating, delete all negative ratings
+                            urlParameters = getDeletePointParameters(markerLatLng);
+                            try {
+                                URL url = new URL(context.getResources().getString(R.string.delete_users));
+                                getResponseFromHttpUrl(url, urlParameters);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            // delete point from map
+                            urlParameters = getDeletePointParameters(markerLatLng);
+                            try {
+                                URL url = new URL(context.getResources().getString(R.string.delete_point));
+                                getResponseFromHttpUrl(url, urlParameters);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            mMap.clear();
+                            addMarkers(mMap, getMarkers(mMap));
+                        }
+                    }
+                }
+            });
+        }
+        alertDialogBuilder.setNegativeButton("Zrušit", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+            }
+        });
+        alertDialog = alertDialogBuilder.create();
+        alertDialog.setCanceledOnTouchOutside(false);
+        alertDialog.show();
     }
 }
