@@ -16,6 +16,8 @@
                 android:title="O aplikaci" />
             <item android:id="@+id/ovladani"
             android:title="Ovládání" />
+            <item android:id="@+id/adresa"
+                android:title="Zadat adresu" />
             <item android:id="@+id/statistiky"
                 android:title="Statistiky" />
         </menu>

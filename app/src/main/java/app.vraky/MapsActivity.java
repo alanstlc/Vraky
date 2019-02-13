@@ -20,6 +20,8 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
@@ -36,10 +38,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.util.ArrayUtils;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -61,6 +65,8 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Locale;
 import java.util.Scanner;
 
 import static app.vraky.GetParams.getBoundariesParameters;
@@ -173,6 +179,36 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             alertDialog.show();
             return true;
         }
+
+        if (id == R.id.adresa) {
+            final View infoView = inflater.inflate(R.layout.adresa, null);
+            alertDialogBuilder.setView(infoView);
+            alertDialogBuilder.setNegativeButton("Ok", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    EditText editText = infoView.findViewById(R.id.addressText);
+                    Geocoder geoCoder = new Geocoder(context, Locale.getDefault());
+                    try {
+                        List<Address> addresses = geoCoder.getFromLocationName(editText.getText().toString(), 5);
+                        if (addresses.size() > 0) {
+                            Double lat = (double) (addresses.get(0).getLatitude());
+                            Double lon = (double) (addresses.get(0).getLongitude());
+                            LatLng selectedLocation = new LatLng(lat, lon);
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(selectedLocation, 18));
+                        }
+                        else {
+                            Toast.makeText(MapsActivity.this, "Adresa nenalezena!",
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            alertDialog = alertDialogBuilder.create();
+            alertDialog.show();
+            return true;
+        }
+
         if (id == R.id.statistiky) {
             final View infoView = inflater.inflate(R.layout.statistiky, null);
             // get info about total count of carwrecks
@@ -193,7 +229,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 count = jsonObject.getString("count");
                 TextView countMineTV = infoView.findViewById(R.id.countMineTV);
                 countMineTV.setText("Počet mnou nahlášených vraků: ".concat(count));
-            } catch (Exception e) {e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
             alertDialogBuilder.setView(infoView);
             alertDialogBuilder.setNegativeButton("Ok", new DialogInterface.OnClickListener() {
@@ -253,7 +290,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     String count = jsonObject.getString("count");
                     TextView countTV = infoView.findViewById(R.id.countTV);
                     countTV.setText("Počet vraků v databázi: ".concat(count));
-                } catch (Exception e) {e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
 
                 alertDialogBuilder.setView(infoView);
@@ -305,7 +343,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         try {
                             alreadyClickedMarker(clickedMarker);
 
-                        } catch (Exception e) {e.printStackTrace();
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
 
                     } else {
@@ -366,7 +405,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                         try {
                                             URL url = new URL(context.getResources().getString(R.string.insert_point));
                                             getResponseFromHttpUrl(url, urlParameters);
-                                        } catch (Exception e) {e.printStackTrace();
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
                                         }
 
                                         // insert user's rating to table
@@ -374,7 +414,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                         try {
                                             URL url = new URL(context.getResources().getString(R.string.insert_user));
                                             getResponseFromHttpUrl(url, urlParameters);
-                                        } catch (Exception e) {e.printStackTrace();
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
                                         }
                                     }
                                 });
@@ -388,7 +429,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 alertDialog = alertDialogBuilder.create();
                                 alertDialog.setCanceledOnTouchOutside(false);
                                 alertDialog.show();
-                            } catch (Exception e) {e.printStackTrace();
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
                         } else {
                             alertDialogBuilder.setMessage("Zaměřte prosím mapu větším zoomem pro lepší přesnost");
@@ -427,7 +469,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 URL url = new URL(context.getResources().getString(R.string.select_points));
                 json_data = getResponseFromHttpUrl(url, urlParameters);
                 json_data = json_data.substring(0, json_data.length() - 1);
-            } catch (Exception e) {e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
             return json_data.split("\\|");
         }
@@ -600,8 +643,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         JSONObject jsonObj = new JSONObject(json_data_array[0]);
                         alreadyClickedMarker(jsonObj);
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                catch (Exception e) {e.printStackTrace();}
             }
         });
     }
@@ -765,7 +809,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         LatLng latLng = null;
         try {
             latLng = new LatLng(clickedMarker.getDouble("latitude"), clickedMarker.getDouble("longitude"));
-            } catch (Exception e){e.printStackTrace();}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         final LatLng markerLatLng = latLng;
 
         try {
